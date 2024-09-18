@@ -4,6 +4,74 @@
 El framework propuesto para el desarrollo de aplicaciones de la Web Semántica de las Cosas (SWoT) tiene como objetivo principal facilitar la creación de soluciones IoT interoperables, escalables y semánticamente ricas. Este framework se alinea con los estándares de Web of Things (WoT) definidos por el W3C y se enfoca en proporcionar una estructura y metodología que permita a los desarrolladores implementar eficientemente aplicaciones SWoT.
 ## 2. Arquitectura del Framework
 
+```mermaid
+graph TD
+    subgraph "Capa de Dispositivos IoT"
+        A[Sensores]
+        B[Actuadores]
+        C[Dispositivos IoT]
+    end
+
+    subgraph "Capa de Abstracción Semántica"
+        D[Mapeo Semántico]
+        E[IoT-Lite]
+        F[SSN/SOSA]
+    end
+
+    subgraph "Capa de Gestión de Conocimiento"
+        G[Triplestore]
+        H[Motor de Reglas Semánticas]
+        I[Gestor de Contexto]
+    end
+
+    subgraph "Capa de Servicios"
+        J[API RESTful]
+        K[Servicios Web Semánticos]
+        L[SPARQL Endpoint]
+    end
+
+    subgraph "Capa de Aplicación"
+        M[Interfaces de Usuario]
+        N[Lógica de Negocio]
+        O[Visualizador de Grafos de Conocimiento]
+    end
+
+    subgraph "Componentes Transversales"
+        P[Gestor de Seguridad y Privacidad]
+        Q[Generador de Esqueletos de Proyecto]
+        R[Biblioteca de Ontologías]
+    end
+
+    A --> D
+    B --> D
+    C --> D
+    D --> E
+    D --> F
+    E --> G
+    F --> G
+    G --> H
+    G --> I
+    H --> J
+    I --> J
+    G --> L
+    J --> M
+    K --> M
+    L --> O
+    N --> M
+    P -.-> A
+    P -.-> B
+    P -.-> C
+    P -.-> J
+    P -.-> K
+    Q -.-> M
+    Q -.-> N
+    R -.-> D
+    R -.-> E
+    R -.-> F
+   
+   ```
+
+
 ### 2.1 Capas Principales
 - Capa de Dispositivos IoT: Interfaz con hardware y sensores.
 - Capa de Abstracción Semántica: Mapeo de datos de dispositivos a ontologías.
