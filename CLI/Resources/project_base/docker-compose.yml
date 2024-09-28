@@ -1,0 +1,57 @@
+version: '3'
+services:
+  mosquitto:
+    build:
+      context: ./mosquitto
+      dockerfile: Dockerfile
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+
+  sensorSimulator:
+    build: ./sensorSimulator
+    depends_on:
+      - mosquitto
+    environment:
+      - MQTT_BROKER=tcp://mosquitto:1883
+
+  semanticMapper:
+    build: ./semanticMapper
+    depends_on:
+      - mosquitto
+      - fuseki
+    environment:
+      - MQTT_BROKER=tcp://mosquitto:1883
+      
+  fuseki:
+    image: stain/jena-fuseki
+    environment:
+      - ADMIN_PASSWORD=admin123
+    ports:
+      - "3030:3030"
+    volumes:
+      - ./fuseki-data:/fuseki
+
+  semanticReasoner:
+    build: ./semanticReasoner
+    depends_on:
+      - fuseki
+
+  apiGateway:
+    build: ./apiGateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - fuseki
+
+  visualization:
+    build: ./visualization
+    ports:
+      - "8081:8081"
+    depends_on:
+      - apiGateway
