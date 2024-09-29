@@ -36,7 +36,8 @@ generate_spring_boot_project() {
 
     # Insertar código de ejemplo
     main_class_path="$project_dir/$service_name/src/main/java/com/swot/$service_name/example"
-    echo "Copiando recursos de ejemplo de $RESOURCES_DIR/Templates/$service_name_capitalized.java en $main_class_path"
+    # Copiar archivos usando el patrón $service_name_capitalized*.java
+    echo "Copiando archivos de ejemplo que coincidan con $service_name_capitalized*.java desde $RESOURCES_DIR/Templates/ a $main_class_path"
 
     # Verificar si el directorio existe, si no, crearlo
     if [ ! -d "$main_class_path" ]; then
@@ -45,11 +46,23 @@ generate_spring_boot_project() {
         echo "El directorio ya existe."
     fi
 
-    # Copiar el archivo usando el nuevo service_name con la primera letra en mayúscula
-    cp "$RESOURCES_DIR/Templates/$service_name_capitalized.java" "$main_class_path/"
+    # Copiar los archivos que coincidan con el patrón y luego aplicar las modificaciones de paquete
+    for file in "$RESOURCES_DIR/Templates/$service_name_capitalized"*.java; do
+        if [ -f "$file" ]; then
+            cp "$file" "$main_class_path/"
+            
+            # Obtener el nombre del archivo sin la ruta
+            filename=$(basename "$file")
 
-    # Actualizar el paquete en el archivo Java
-    sed -i '' "s/package com\.example\..*;/package $package_name.example;/g" "$main_class_path/$service_name.java"
+            # Actualizar el paquete en el archivo Java copiado
+            sed -i '' "s/package com\.example\..*;/package $package_name.example;/g" "$main_class_path/$filename"
+
+            echo "Archivo $filename copiado y modificado."
+        else
+            echo "No se encontraron archivos que coincidan con $service_name_capitalized*.java"
+        fi
+    done
+
 
     # Actualizar build.gradle con dependencias adicionales
     cat <<EOT >> "$project_dir/$service_name/build.gradle"
@@ -59,6 +72,7 @@ dependencies {
     implementation 'org.apache.jena:jena-core:4.6.1'
     implementation 'org.apache.jena:jena-arq:4.6.1'
     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'
+    implementation group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.5'
 }
 EOT
 
@@ -80,7 +94,7 @@ create_project_structure() {
     cp -R "$RESOURCES_DIR/project_base/"* "$project_dir/"
 
     # Generar proyectos Spring Boot para servicios relevantes
-    for service in apiGateway visualization semanticMapper semanticReasoner; do
+    for service in apiGateway visualization semanticMapper semanticReasoner sensorSimulator; do
         generate_spring_boot_project "$service" "$project_dir"
     done
 

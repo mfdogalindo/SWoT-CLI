@@ -1,4 +1,3 @@
-version: '3'
 services:
   mosquitto:
     build:
@@ -13,14 +12,14 @@ services:
       - ./mosquitto/log:/mosquitto/log
     restart: unless-stopped
 
-  sensorSimulator:
+  sensor_simulator:
     build: ./sensorSimulator
     depends_on:
       - mosquitto
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
 
-  semanticMapper:
+  semantic_mapper:
     build: ./semanticMapper
     depends_on:
       - mosquitto
@@ -37,12 +36,12 @@ services:
     volumes:
       - ./fuseki-data:/fuseki
 
-  semanticReasoner:
+  semantic_reasoner:
     build: ./semanticReasoner
     depends_on:
       - fuseki
 
-  apiGateway:
+  api_gateway:
     build: ./apiGateway
     ports:
       - "8080:8080"
@@ -54,4 +53,4 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - apiGateway
+      - api_gateway

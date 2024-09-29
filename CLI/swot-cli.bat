@@ -38,10 +38,9 @@ del "%temp_file%"
 REM Capitalizar la primera letra de service_name usando PowerShell
 for /f %%i in ('powershell -Command "([char]::ToUpper('%service_name%'[0]) + '%service_name:~1%')"') do set "service_name_capitalized=%%i"
 
-
 REM Insertar código de ejemplo
 set "main_class_path=%project_dir%\%service_name%\src\main\java\com\swot\%service_name%\example"
-echo Copiando recursos de ejemplo  de %RESOURCES_DIR%\Templates\%service_name_capitalized%.java en %main_class_path%
+echo Copiando archivos de ejemplo que coincidan con %service_name_capitalized%*.java desde %RESOURCES_DIR%\Templates\ a %main_class_path%
 
 REM Verificar si el directorio existe, si no, crearlo
 if not exist "%main_class_path%" (
@@ -50,12 +49,22 @@ if not exist "%main_class_path%" (
     echo El directorio ya existe.
 )
 
-:: Copiar el archivo usando el nuevo service_name con la primera letra en mayúscula
-copy "%RESOURCES_DIR%\Templates\%service_name_capitalized%.java" "%main_class_path%"
+REM Copiar los archivos que coincidan con el patrón y luego aplicar las modificaciones de paquete
+for %%f in (%RESOURCES_DIR%\Templates\%service_name_capitalized%*.java) do (
+    if exist "%%f" (
+        copy "%%f" "%main_class_path%"
 
+        REM Obtener el nombre del archivo sin la ruta
+        for %%g in ("%%f") do set "filename=%%~ng"
 
-REM Actualizar el paquete en el archivo Java
-powershell -Command "(Get-Content '%main_class_path%\%service_name%.java') -replace 'package com\.example\..*?;', 'package %package_name%.example;' | Set-Content '%main_class_path%\%service_name%.java'"
+        REM Actualizar el paquete en el archivo Java copiado
+        powershell -Command "(Get-Content '%main_class_path%\!filename!.java') -replace 'package com\.example\..*?;', 'package %package_name%.example;' | Set-Content '%main_class_path%\!filename!.java'"
+
+        echo Archivo !filename!.java copiado y modificado.
+    ) else (
+        echo No se encontraron archivos que coincidan con %service_name_capitalized%*.java
+    )
+)
 
 
 REM Actualizar build.gradle con dependencias adicionales
@@ -85,7 +94,7 @@ REM Copiar estructura base del proyecto
 xcopy /E /I /Y "%RESOURCES_DIR%\project_base" "%project_dir%"
 
 REM Generar proyectos Spring Boot para servicios relevantes
-for %%s in (apiGateway visualization semanticMapper semanticReasoner) do (
+for %%s in (apiGateway visualization semanticMapper semanticReasoner sensorSimulator) do (
     call :generate_spring_boot_project %%s "%project_dir%"
 )
 

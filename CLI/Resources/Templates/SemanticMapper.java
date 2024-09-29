@@ -1,9 +1,8 @@
 package com.example.semanticmapper;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.springframework.stereotype.Component;
 
 @Component
 public class SemanticMapper {
