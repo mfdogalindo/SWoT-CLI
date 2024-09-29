@@ -3,6 +3,7 @@ package com.example.sensorsimulator;
 import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Random;
 import java.util.UUID;
@@ -14,8 +15,8 @@ class SensorSimulator {
     private final MqttClient mqttClient;
     private final Random random = new Random();
 
-    public SensorSimulator() throws MqttException {
-        String broker = "tcp://localhost:1883";
+    
+    public SensorSimulator(@Value("${MQTT_BROKER:tcp://localhost:1883}") String broker) throws MqttException {
         String clientId = "SensorSimulator-" + UUID.randomUUID().toString();
         this.mqttClient = new MqttClient(broker, clientId);
         MqttConnectOptions connOpts = new MqttConnectOptions();

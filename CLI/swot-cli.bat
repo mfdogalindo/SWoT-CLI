@@ -11,8 +11,9 @@ call :main %*
 
 REM Función para mostrar el uso del script
 :show_usage
-echo Uso: swot-cli.bat init ^<project-name^> --ontology=^<ontologies^>
+echo Uso: swot-cli.bat init ^<project-name^> --ontology=^<ontologies^> ^| swot-cli.bat run ^<project-name^>
 echo Ejemplo: swot-cli.bat init my-swot-project --ontology=iot-lite,ssn,sosa
+echo          swot-cli.bat run my-swot-project
 exit /b
 
 REM Función para generar un proyecto Spring Boot
@@ -66,7 +67,6 @@ for %%f in (%RESOURCES_DIR%\Templates\%service_name_capitalized%*.java) do (
     )
 )
 
-
 REM Actualizar build.gradle con dependencias adicionales
 echo. >> "%project_dir%\%service_name%\build.gradle"
 echo // Dependencias adicionales para SWoT >> "%project_dir%\%service_name%\build.gradle"
@@ -74,6 +74,7 @@ echo dependencies { >> "%project_dir%\%service_name%\build.gradle"
 echo     implementation 'org.apache.jena:jena-core:4.6.1' >> "%project_dir%\%service_name%\build.gradle"
 echo     implementation 'org.apache.jena:jena-arq:4.6.1' >> "%project_dir%\%service_name%\build.gradle"
 echo     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2' >> "%project_dir%\%service_name%\build.gradle"
+echo     implementation 'org.springframework.integration:spring-integration-mqtt' >> "%project_dir%\%service_name%\build.gradle"
 echo } >> "%project_dir%\%service_name%\build.gradle"
 
 echo Proyecto Spring Boot para %service_name% generado exitosamente con código de ejemplo y dependencias adicionales.
@@ -112,23 +113,46 @@ powershell -Command "(gc '%project_dir%\docker-compose.yml') -replace '{{PROJECT
 echo Proyecto %project_name% creado exitosamente en %project_dir%.
 exit /b
 
+REM Función para ejecutar docker-compose en un proyecto
+:run_project
+set "project_name=%~1"
+set "project_dir=%PROJECTS_DIR%\%project_name%"
+
+REM Verificar si el archivo docker-compose.yml existe
+if not exist "%project_dir%\docker-compose.yml" (
+    echo No se encontró docker-compose.yml en %project_dir%.
+    exit /b
+)
+
+REM Ejecutar docker-compose
+cd /d "%project_dir%"
+echo Ejecutando Docker compose en la ruta: %project_dir%
+docker-compose up -d
+
+if %ERRORLEVEL% equ 0 (
+    echo Docker Compose ejecutado exitosamente en %project_name%.
+) else (
+    echo Ocurrió un error al ejecutar Docker Compose en %project_name%.
+)
+exit /b
+
 REM Punto de entrada principal del script
 :main
-if "%1" neq "init" goto show_usage
+if "%1" neq "init" if "%1" neq "run" goto show_usage
 if "%2" equ "" goto show_usage
 
-REM Extraer nombre del proyecto y ontologías
-set "project_name=%2"
-set "ontologies=%3"
-set "ontologies=%ontologies:--ontology=%"
+REM Verificar si es init o run
+if "%1" equ "init" (
+    REM Extraer nombre del proyecto y ontologías
+    set "project_name=%2"
+    set "ontologies=%3"
+    set "ontologies=%ontologies:--ontology=%"
 
-REM Crear la estructura del proyecto 
-call :create_project_structure "%project_name%" "%ontologies%"
-exit /b
-
-:: Función para convertir una letra a mayúscula
-:toUpperCase
-setlocal enabledelayedexpansion
-
-endlocal & set "%~1=%first_letter%"
-exit /b
+    REM Crear la estructura del proyecto 
+    call :create_project_structure "%2" "%ontologies%"
+    exit /b
+) else if "%1" equ "run" (
+    REM Ejecutar el proyecto con docker-compose
+    call :run_project "%2%"
+    exit /b
+)

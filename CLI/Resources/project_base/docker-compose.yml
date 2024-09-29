@@ -11,6 +11,8 @@ services:
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
     restart: unless-stopped
+    networks:
+      - mqtt-network
 
   sensor_simulator:
     build: ./sensorSimulator
@@ -18,6 +20,8 @@ services:
       - mosquitto
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
+    networks:
+      - mqtt-network
 
   semantic_mapper:
     build: ./semanticMapper
@@ -54,3 +58,7 @@ services:
       - "8081:8081"
     depends_on:
       - api_gateway
+
+networks:
+  mqtt-network:
+    driver: bridge

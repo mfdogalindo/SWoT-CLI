@@ -7,8 +7,9 @@ PROJECTS_DIR="$SCRIPT_DIR/Projects"
 
 # Mostrar uso del script
 show_usage() {
-    echo "Uso: swot-cli.sh init <project-name> --ontology=<ontologies>"
+    echo "Uso: swot-cli.sh init <project-name> --ontology=<ontologies> | swot-cli.sh run <project-name>"
     echo "Ejemplo: swot-cli.sh init my-swot-project --ontology=iot-lite,ssn,sosa"
+    echo "         swot-cli.sh run my-swot-project"
 }
 
 # Función para generar un proyecto Spring Boot
@@ -72,7 +73,7 @@ dependencies {
     implementation 'org.apache.jena:jena-core:4.6.1'
     implementation 'org.apache.jena:jena-arq:4.6.1'
     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'
-    implementation group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.5'
+    implementation 'org.springframework.integration:spring-integration-mqtt'
 }
 EOT
 
@@ -90,9 +91,6 @@ create_project_structure() {
     # Crear directorio del proyecto
     mkdir -p "$project_dir"
 
-    # Copiar estructura base del proyecto
-    cp -R "$RESOURCES_DIR/project_base/"* "$project_dir/"
-
     # Generar proyectos Spring Boot para servicios relevantes
     for service in apiGateway visualization semanticMapper semanticReasoner sensorSimulator; do
         generate_spring_boot_project "$service" "$project_dir"
@@ -106,30 +104,66 @@ create_project_structure() {
     # Crear archivo de configuración con las ontologías seleccionadas
     echo "$ontologies" > "$project_dir/ontologies.txt"
 
+    # Copiar estructura base del proyecto
+    cp -R "$RESOURCES_DIR/project_base/"* "$project_dir/"
+
     # Reemplazar placeholders en archivos si es necesario
     sed -i '' "s/{{PROJECT_NAME}}/$project_name/g" "$project_dir/docker-compose.yml"
 
     echo "Proyecto $project_name creado exitosamente en $project_dir."
 }
 
+# Función para ejecutar docker-compose en un proyecto
+run_project() {
+    local project_name="$1"
+    local project_dir="$PROJECTS_DIR/$project_name"
+
+    # Verificar si el archivo docker-compose.yml existe
+    if [ ! -f "$project_dir/docker-compose.yml" ]; then
+        echo "No se encontró docker-compose.yml en $project_dir."
+        exit 1
+    fi
+
+    # Ejecutar docker-compose
+    cd "$project_dir"
+    docker-compose up -d
+
+    if [ $? -eq 0 ]; then
+        echo "Docker Compose ejecutado exitosamente en $project_name."
+    else
+        echo "Ocurrió un error al ejecutar Docker Compose en $project_name."
+        exit 1
+    fi
+}
+
 # Punto de entrada principal del script
 main() {
-    if [ "$1" != "init" ]; then
-        show_usage
-        exit 1
-    fi
+    case "$1" in
+        init)
+            if [ -z "$2" ]; then
+                show_usage
+                exit 1
+            fi
+            # Extraer nombre del proyecto y ontologías
+            project_name="$2"
+            ontologies="${3#--ontology=}"
 
-    if [ -z "$2" ]; then
-        show_usage
-        exit 1
-    fi
-
-    # Extraer nombre del proyecto y ontologías
-    project_name="$2"
-    ontologies="${3#--ontology=}"
-
-    # Crear la estructura del proyecto
-    create_project_structure "$project_name" "$ontologies"
+            # Crear la estructura del proyecto
+            create_project_structure "$project_name" "$ontologies"
+            ;;
+        run)
+            if [ -z "$2" ]; then
+                show_usage
+                exit 1
+            fi
+            # Ejecutar el proyecto con docker-compose
+            run_project "$2"
+            ;;
+        *)
+            show_usage
+            exit 1
+            ;;
+    esac
 }
 
 # Ejecutar el punto de entrada principal
