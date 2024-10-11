@@ -1,4 +1,4 @@
-package com.example.sensorsimulator;
+package PackagePlaceHolder.example;
 
 import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,6 +15,8 @@ class SensorSimulator {
     private final MqttClient mqttClient;
     private final Random random = new Random();
 
+    @Value ("${MQTT_TOPIC:sensors/data}")
+    private String topic;
     
     public SensorSimulator(@Value("${MQTT_BROKER:tcp://localhost:1883}") String broker) throws MqttException {
         String clientId = "SensorSimulator-" + UUID.randomUUID().toString();

@@ -1,4 +1,4 @@
-package com.example.sensorsimulator;
+package PackagePlaceHolder.example;
 
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.annotation.Configuration;

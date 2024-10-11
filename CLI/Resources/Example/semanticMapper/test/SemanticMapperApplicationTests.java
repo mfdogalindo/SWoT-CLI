@@ -1,9 +1,9 @@
-package com.swot.sensorSimulator;
+package PackagePlaceHolder;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class SensorSimulatorApplicationTests {
+class SemanticMapperApplicationTests {
 
 }

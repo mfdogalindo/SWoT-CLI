@@ -1,5 +1,5 @@
 # Etapa de construcción
-FROM eclipse-temurin:22-jdk-jammy as builder
+FROM eclipse-temurin:23-jdk as builder
 WORKDIR /app
 
 # Copiar los archivos de Gradle
@@ -16,7 +16,7 @@ RUN chmod +x ./gradlew
 RUN ./gradlew build --no-daemon --stacktrace
 
 # Etapa final
-FROM eclipse-temurin:22-jre-jammy
+FROM eclipse-temurin:23-jre
 WORKDIR /app
 
 # Copiar el JAR construido desde la etapa de construcción

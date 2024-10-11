@@ -14,12 +14,24 @@ services:
     networks:
       - mqtt-network
 
+  fuseki:
+    image: stain/jena-fuseki
+    environment:
+      - ADMIN_PASSWORD=admin123
+    ports:
+      - "3030:3030"
+    volumes:
+      - ./fuseki-data:/fuseki
+    networks:
+      - fuseki-network
+
   sensor_simulator:
     build: ./sensorSimulator
     depends_on:
       - mosquitto
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
+      - MQTT_TOPIC=sensors/data
     networks:
       - mqtt-network
 
@@ -30,15 +42,16 @@ services:
       - fuseki
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
-      
-  fuseki:
-    image: stain/jena-fuseki
-    environment:
-      - ADMIN_PASSWORD=admin123
-    ports:
-      - "3030:3030"
-    volumes:
-      - ./fuseki-data:/fuseki
+      - FUSEKI_URL=http://fuseki:3030
+      - MQTT_CLIENT=semantic_mapper
+      - MQTT_TOPIC=sensors/data
+      - TRIPLESTORE_URL=http://fuseki:3030
+      - TRIPLESTORE_DATASET=swot
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=admin123
+    networks:
+      - fuseki-network
+      - mqtt-network
 
   semantic_reasoner:
     build: ./semanticReasoner
@@ -61,4 +74,6 @@ services:
 
 networks:
   mqtt-network:
+    driver: bridge
+  fuseki-network:
     driver: bridge

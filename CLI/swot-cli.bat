@@ -28,7 +28,7 @@ REM Crear un archivo temporal para la salida
 set "temp_file=%TEMP%\springboot_%RANDOM%.zip"
 
 REM Hacer la solicitud a Spring Initializr
-powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://start.spring.io/starter.zip?type=gradle-project&language=java&bootVersion=3.3.4&baseDir=%service_name%&groupId=com.swot&artifactId=%service_name%&name=%service_name%&description=SWoT %service_name% service&packageName=%package_name%&packaging=jar&javaVersion=22&dependencies=web,actuator,devtools', '%temp_file%')"
+powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://start.spring.io/starter.zip?type=gradle-project&language=java&bootVersion=3.3.4&baseDir=%service_name%&groupId=com.swot&artifactId=%service_name%&name=%service_name%&description=SWoT %service_name% service&packageName=%package_name%&packaging=jar&javaVersion=23&dependencies=web,actuator,devtools', '%temp_file%')"
 
 REM Descomprimir el archivo en el directorio del proyecto
 powershell -Command "Expand-Archive -Path '%temp_file%' -DestinationPath '%project_dir%' -Force"
