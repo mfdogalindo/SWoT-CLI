@@ -1,5 +1,6 @@
 package PackagePlaceHolder.example.service;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.apache.jena.rdf.model.*;
@@ -52,14 +53,24 @@ public class SemanticMapperService {
     }
 
     private void createObservation(Model model, Resource sensor, String observableProperty, Object result) {
-        Resource observation = model.createResource()
+        Resource observation = model.createResource(BASE_URI + "observation/" + observableProperty + "/" + sensor.getLocalName())
                 .addProperty(RDF.type, model.createResource(SOSA + "Observation"))
                 .addProperty(model.createProperty(SOSA + "madeBySensor"), sensor)
                 .addProperty(model.createProperty(SOSA + "observedProperty"),
-                        model.createResource(BASE_URI + "property/" + observableProperty))
-                .addProperty(model.createProperty(SOSA + "hasSimpleResult"),
-                        model.createTypedLiteral(result));
-
+                        model.createResource(BASE_URI + "property/" + observableProperty));
+    
+        // Determina el tipo de resultado (double o integer)
+        if (result instanceof Double) {
+            observation.addProperty(model.createProperty(SOSA + "hasSimpleResult"), 
+                    model.createTypedLiteral((Double) result, XSDDatatype.XSDdouble));
+        } else if (result instanceof Integer) {
+            observation.addProperty(model.createProperty(SOSA + "hasSimpleResult"), 
+                    model.createTypedLiteral((Integer) result, XSDDatatype.XSDinteger));
+        } else {
+            observation.addProperty(model.createProperty(SOSA + "hasSimpleResult"),
+                    model.createTypedLiteral(result.toString()));
+        }
+    
         sensor.addProperty(model.createProperty(SSN + "implements"),
                 model.createResource(BASE_URI + "procedure/measure" + observableProperty.substring(0, 1).toUpperCase() + observableProperty.substring(1)));
     }

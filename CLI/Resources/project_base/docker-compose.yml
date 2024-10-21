@@ -55,8 +55,15 @@ services:
 
   semantic_reasoner:
     build: ./semanticReasoner
+    ports:
+      - "8080:8081"
     depends_on:
       - fuseki
+    environment:
+      - TRIPLESTORE_URL=http://fuseki:3030
+      - TRIPLESTORE_DATASET=swot
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=admin123
 
   api_gateway:
     build: ./apiGateway
@@ -68,7 +75,7 @@ services:
   visualization:
     build: ./visualization
     ports:
-      - "8081:8081"
+      - "8081:8082"
     depends_on:
       - api_gateway
 

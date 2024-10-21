@@ -25,7 +25,7 @@ generate_spring_boot_project() {
     temp_file=$(mktemp /tmp/springboot_XXXX.zip)
 
     # Hacer la solicitud a Spring Initializr
-    curl -o "$temp_file" "https://start.spring.io/starter.zip?type=gradle-project&language=java&bootVersion=3.3.4&baseDir=$service_name&groupId=com.$project_name&artifactId=$service_name&name=$service_name&description=SWoT%20$service_name%20service&packageName=$package_name&packaging=jar&javaVersion=23&dependencies=web,actuator,devtools"
+    curl -o "$temp_file" "https://start.spring.io/starter.zip?type=gradle-project&language=java&bootVersion=3.3.4&baseDir=$service_name&groupId=com.$project_name&artifactId=$service_name&name=$service_name&description=SWoT%20$service_name%20service&packageName=$package_name&packaging=jar&javaVersion=23&dependencies=web,actuator,devtools,lombok"
 
     # Descomprimir el archivo en el directorio del proyecto
     unzip -o "$temp_file" -d "$project_dir"
@@ -94,6 +94,7 @@ dependencies {
 	implementation "org.apache.jena:jena-rdfconnection:\$JENA_VERSION"
     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'
     implementation 'org.springframework.integration:spring-integration-mqtt'
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
 }
 EOT
 
