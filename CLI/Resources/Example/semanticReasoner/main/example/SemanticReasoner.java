@@ -1,5 +1,6 @@
 package PackagePlaceHolder.example;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdfconnection.RDFConnection;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @Component
 public class SemanticReasoner {
 
@@ -27,10 +29,10 @@ public class SemanticReasoner {
     @Value("${TRIPLESTORE_DATASET:swot}")
     private String triplestoreDataset;
 
-    @Value("${TRIPLESTORE_USERNAME:admin}")
+    @Value("${TRIPLESTORE_USERNAME")
     private String triplestoreUsername;
 
-    @Value("${TRIPLESTORE_PASSWORD:admin123}")
+    @Value("${TRIPLESTORE_PASSWORD}")
     private String triplestorePassword;
 
     @Value("${RULES_FILE:rules.txt}")
@@ -79,19 +81,21 @@ public class SemanticReasoner {
 
     private void storeInferences(StmtIterator inferences) {
         Model newInferences = ModelFactory.createDefaultModel();
-
+        int countInferences = 0;
         // Convertir StmtIterator a un Model
         while (inferences.hasNext()) {
             Statement stmt = inferences.next();
             newInferences.add(stmt); // Agregar cada inferencia al modelo
+            countInferences++;
         }
 
         // Guardar las inferencias en el triplestore
         try (RDFConnection conn = RDFConnection.connectPW(triplestoreEndpoint + "/" + triplestoreDataset,
                 triplestoreUsername, triplestorePassword)) {
             conn.load(newInferences); // Cargar el modelo de inferencias en el triplestore
+            log.info("Inferences added: {}", countInferences );
         } catch (Exception e) {
-            System.out.println("Error storing inferences: " + e.getMessage());
+            log.error("Error storing inferences: {}", e.getMessage());
         }
     }
 

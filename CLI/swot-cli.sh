@@ -113,7 +113,7 @@ create_project_structure() {
     mkdir -p "$project_dir"
 
     # Generar proyectos Spring Boot para servicios relevantes
-    for service in apiGateway visualization semanticMapper semanticReasoner sensorSimulator; do
+    for service in apigateway visualization semanticmapper semanticreasoner sensorsimulator; do
         generate_spring_boot_project "$project_name" "$service" "$project_dir"
     done
 
@@ -127,7 +127,7 @@ create_project_structure() {
     sed -i '' "s/{{PROJECT_NAME}}/$project_name/g" "$project_dir/docker-compose.yml"
 
     # Copiar Dockerfiles para cada servicio
-    for service in sensorSimulator semanticMapper semanticReasoner apiGateway visualization mosquitto; do
+    for service in sensorsimulator semanticmapper semanticreasoner apigateway visualization mosquitto; do
         cp "$RESOURCES_DIR/Dockerfiles/Dockerfile.$service" "$project_dir/$service/Dockerfile"
     done
 

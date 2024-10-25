@@ -10,7 +10,7 @@ public class SemanticReasonerScheduler {
     @Autowired
     SemanticReasoner semanticReasoner;
 
-    @Scheduled(fixedRate = 3600000) // Ejecutar cada hora
+    @Scheduled(initialDelay = 30000, fixedRate = 3600000) // Ejecutar cada hora con un retardo inicial de 30 segundos
     public void scheduleReasoning() {
         semanticReasoner.performReasoning();
     }

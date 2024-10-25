@@ -26,7 +26,7 @@ services:
       - fuseki-network
 
   sensor_simulator:
-    build: ./sensorSimulator
+    build: ./sensorsimulator
     depends_on:
       - mosquitto
     environment:
@@ -36,13 +36,12 @@ services:
       - mqtt-network
 
   semantic_mapper:
-    build: ./semanticMapper
+    build: ./semanticmapper
     depends_on:
       - mosquitto
       - fuseki
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
-      - FUSEKI_URL=http://fuseki:3030
       - MQTT_CLIENT=semantic_mapper
       - MQTT_TOPIC=sensors/data
       - TRIPLESTORE_URL=http://fuseki:3030
@@ -54,9 +53,9 @@ services:
       - mqtt-network
 
   semantic_reasoner:
-    build: ./semanticReasoner
+    build: ./semanticreasoner
     ports:
-      - "8080:8081"
+      - "8081:8081"
     depends_on:
       - fuseki
     environment:
@@ -64,18 +63,27 @@ services:
       - TRIPLESTORE_DATASET=swot
       - TRIPLESTORE_USERNAME=admin
       - TRIPLESTORE_PASSWORD=admin123
+    networks:
+      - fuseki-network
 
   api_gateway:
-    build: ./apiGateway
+    build: ./apigateway
     ports:
       - "8080:8080"
     depends_on:
       - fuseki
+    environment:
+      - TRIPLESTORE_URL=http://fuseki:3030
+      - TRIPLESTORE_DATASET=swot
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=admin123
+    networks:
+      - fuseki-network
 
   visualization:
     build: ./visualization
     ports:
-      - "8081:8082"
+      - "8082:8082"
     depends_on:
       - api_gateway
 

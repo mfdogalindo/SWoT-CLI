@@ -95,12 +95,12 @@ REM Copiar estructura base del proyecto
 xcopy /E /I /Y "%RESOURCES_DIR%\project_base" "%project_dir%"
 
 REM Generar proyectos Spring Boot para servicios relevantes
-for %%s in (apiGateway visualization semanticMapper semanticReasoner sensorSimulator) do (
+for %%s in (apigateway visualization semanticmapper semanticreasoner sensorsimulator) do (
     call :generate_spring_boot_project %%s "%project_dir%"
 )
 
 REM Copiar Dockerfiles para cada servicio
-for %%s in (sensorSimulator semanticMapper semanticReasoner apiGateway visualization mosquitto) do (
+for %%s in (sensorsimulator semanticmapper semanticreasoner apigateway visualization mosquitto) do (
     copy "%RESOURCES_DIR%\Dockerfiles\Dockerfile.%%s" "%project_dir%\%%s\Dockerfile"
 )
 
