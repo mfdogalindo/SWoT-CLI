@@ -35,10 +35,11 @@ class SensorSimulator {
         double temperature = 20 + (random.nextDouble() * 15); // Temperature between 20 and 35
         double humidity = 30 + (random.nextDouble() * 70);    // Humidity between 30 and 100
         int airQuality = random.nextInt(500);                 // AQI between 0 and 500
+        long timestamp = System.currentTimeMillis();
 
         String content = String.format(
-            "{\"id\":\"%s\",\"temperature\":%.2f,\"humidity\":%.2f,\"airQuality\":%d}",
-            sensorId, temperature, humidity, airQuality
+            "{\"id\":\"%s\",\"temperature\":%.2f,\"humidity\":%.2f,\"airQuality\":%d,\"timestamp\":%d}",
+            sensorId, temperature, humidity, airQuality, timestamp
         );
 
         System.out.println("Publishing message: " + content);
