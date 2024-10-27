@@ -1,9 +1,6 @@
 package PackagePlaceHolder.example.controllers;
 
-import PackagePlaceHolder.example.models.AirQualityStatus;
-import PackagePlaceHolder.example.models.ComfortStatus;
-import PackagePlaceHolder.example.models.Observation;
-import PackagePlaceHolder.example.models.TemperatureAlert;
+import PackagePlaceHolder.example.models.*;
 import PackagePlaceHolder.example.services.EnvironmentalInferencesServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,8 +15,7 @@ public class ApiGateway {
 
     @Autowired
     private EnvironmentalInferencesServices service;
-
-
+    
     @GetMapping("/temperature/alerts")
     public List<TemperatureAlert> getTemperatureAlerts() {
         return service.getTemperatureAlerts();
@@ -28,6 +24,11 @@ public class ApiGateway {
     @GetMapping("/airquality/status")
     public List<AirQualityStatus> getAirQualityStatus() {
         return service.getAirQualityStatuses();
+    }
+
+    @GetMapping("/humidity/status")
+    public List<HumidityStatus> getHumidityStatus() {
+        return service.getHumidityStatuses();
     }
 
     @GetMapping("/comfort/levels")

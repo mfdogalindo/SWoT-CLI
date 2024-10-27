@@ -3,6 +3,7 @@ package PackagePlaceHolder.example.services;
 import PackagePlaceHolder.example.exceptions.TripleStoreQueryException;
 import PackagePlaceHolder.example.models.AirQualityStatus;
 import PackagePlaceHolder.example.models.ComfortStatus;
+import PackagePlaceHolder.example.models.HumidityStatus;
 import PackagePlaceHolder.example.models.Observation;
 import PackagePlaceHolder.example.models.TemperatureAlert;
 import PackagePlaceHolder.example.repositories.EnvironmentalRepository;
@@ -205,6 +206,63 @@ public class EnvironmentalInferencesServices {
         }
 
         return levels;
+    }
+
+    public List<HumidityStatus> getHumidityStatuses() {
+        // Consulta SPARQL para obtener estados de humedad
+        String queryString = """
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX sosa: <http://www.w3.org/ns/sosa/>
+                PREFIX swot: <http://example.org/swot/property/>
+                PREFIX inference: <http://example.org/swot/inference/>
+                PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+                
+                SELECT ?observationId ?sensorId ?humidity ?status ?timestamp
+                WHERE {
+                    ?observationId rdf:type sosa:Observation ;
+                                  sosa:madeBySensor ?sensorId ;
+                                  sosa:observedProperty swot:humidity ;
+                                  sosa:hasSimpleResult ?humidity ;
+                                  sosa:resultTime ?timestamp ;
+                                  inference:humidityLevel ?status .
+                
+                    # Filtrar solo los estados recientes (últimas 24 horas)
+                    FILTER (?timestamp >= NOW() - "P1D"^^xsd:duration)
+                }
+                ORDER BY DESC(?timestamp)
+                """;
+        List<HumidityStatus> statuses = new ArrayList<>();
+
+        try {
+
+            // Primero, recolectamos todos los resultados en una lista
+            List<QuerySolution> solutions = repository.queryResultSet(queryString);
+
+            // Luego procesamos los resultados
+            for (QuerySolution soln : solutions) {
+                try {
+                    String timestampStr = soln.getLiteral("timestamp").getString();
+                    LocalDateTime timestamp = parseDateTime(timestampStr);
+
+                    HumidityStatus status = HumidityStatus.builder()
+                            .observationId(soln.getResource("observationId").getURI())
+                            .sensorId(soln.getResource("sensorId").getURI())
+                            .humidity(soln.getLiteral("humidity").getDouble())
+                            .status(soln.getLiteral("status").getString())
+                            .timestamp(timestamp)
+                            .build();
+                    statuses.add(status);
+                } catch (Exception e) {
+                    log.error("Error processing result row: " + soln, e);
+                    // Continuamos con el siguiente resultado en caso de error
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error executing SPARQL query for humidity statuses", e);
+            throw new TripleStoreQueryException("Failed to retrieve humidity statuses", e);
+        }
+
+        return statuses;
     }
 
     public List<Observation> getObservations() {

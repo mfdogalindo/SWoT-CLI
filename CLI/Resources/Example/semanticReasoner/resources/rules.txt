@@ -10,9 +10,20 @@
   (?observation rdf:type sosa:Observation)
   (?observation sosa:observedProperty swot:temperature)
   (?observation sosa:hasSimpleResult ?temperature)
-  greaterThan(?temperature, 31)
+  greaterThan(?temperature, 35)
   ->
   (?observation inference:temperatureAlert "High")
+]
+
+# Regla para detectar temperaturas moderadas
+[DetectHighTemperature:
+  (?observation rdf:type sosa:Observation)
+  (?observation sosa:observedProperty swot:temperature)
+  (?observation sosa:hasSimpleResult ?temperature)
+  greaterThan(?temperature, 26)
+  lessThan(?temperature, 35)
+  ->
+  (?observation inference:temperatureAlert "Normal")
 ]
 
 # Regla para detectar temperaturas bajas
@@ -20,7 +31,7 @@
   (?observation rdf:type sosa:Observation)
   (?observation sosa:observedProperty swot:temperature)
   (?observation sosa:hasSimpleResult ?temperature)
-  lessThan(?temperature, 29)
+  lessThan(?temperature, 15)
   ->
   (?observation inference:temperatureAlert "Low")
 ]
@@ -30,9 +41,31 @@
   (?observation rdf:type sosa:Observation)
   (?observation sosa:observedProperty swot:airQuality)
   (?observation sosa:hasSimpleResult ?value)
-  greaterThan(?value, 80)
+  lessThan(?value, 80)
   ->
   (?observation inference:airQualityStatus "Good")
+]
+
+# Regla para inferir la calidad del aire moderada
+[ClassifyAirQuality2:
+  (?observation rdf:type sosa:Observation)
+  (?observation sosa:observedProperty swot:airQuality)
+  (?observation sosa:hasSimpleResult ?value)
+  greaterThan(?value, 80)
+  lessThan(?value, 300)
+  ->
+  (?observation inference:airQualityStatus "Moderate")
+]
+
+# Regla para inferir la calidad del aire pobre
+[ClassifyAirQuality2:
+  (?observation rdf:type sosa:Observation)
+  (?observation sosa:observedProperty swot:airQuality)
+  (?observation sosa:hasSimpleResult ?value)
+  greaterThan(?value, 300)
+  lessThan(?value, 500)
+  ->
+  (?observation inference:airQualityStatus "Poor")
 ]
 
 # Regla para inferir condiciones de confort
@@ -44,7 +77,7 @@
   (?obs2 sosa:observedProperty swot:humidity)
   (?obs2 sosa:hasSimpleResult ?humidity)
   greaterThan(?temp, 20)
-  le(?temp, 26)
+  lessThan(?temp, 26)
   greaterThan(?humidity, 40)
   lessThan(?humidity, 60)
   ->
@@ -56,10 +89,22 @@
   (?observation rdf:type sosa:Observation)
   (?observation sosa:observedProperty swot:humidity)
   (?observation sosa:hasSimpleResult ?humidity)
-  greaterThan(?humidity, 60)
+  greaterThan(?humidity, 80)
   ->
   (?observation inference:humidityLevel "High")
 ]
+
+# Regla para categorizar niveles de humedad normal
+[CategorizeHumidityLevel2:
+  (?observation rdf:type sosa:Observation)
+  (?observation sosa:observedProperty swot:humidity)
+  (?observation sosa:hasSimpleResult ?humidity)
+  greaterThan(?humidity, 30)
+  lessThan(?humidity, 80)
+  ->
+  (?observation inference:humidityLevel "Normal")
+]
+
 
 [CategorizeHumidityLevel2:
   (?observation rdf:type sosa:Observation)

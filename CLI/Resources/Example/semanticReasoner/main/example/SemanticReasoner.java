@@ -9,7 +9,6 @@ import org.apache.jena.reasoner.rulesys.GenericRuleReasoner;
 import org.apache.jena.reasoner.rulesys.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
@@ -37,10 +36,13 @@ public class SemanticReasoner {
 
     @Value("${RULES_FILE:rules.txt}")
     private String rulesFileName;
+    
+    private Long elapsedTime;
 
 
     public void performReasoning() {
         // 1. Cargar datos del triplestore
+        elapsedTime = System.currentTimeMillis();
         Model data = loadDataFromTriplestore();
 
         // 2. Cargar reglas
@@ -52,13 +54,29 @@ public class SemanticReasoner {
 
         // 4. Realizar inferencias
         StmtIterator inferences = infModel.listStatements();
-        
+
         // 5. Almacenar nuevas inferencias en el triplestore
         storeInferences(inferences);
     }
 
     private Model loadDataFromTriplestore() {
-        String queryString = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }";
+        // Obteniendo datos del triplestore de observaciones que no han sido inferidas
+        String queryString = """
+                PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX sosa: <http://www.w3.org/ns/sosa/>
+                PREFIX swot: <http://example.org/swot/property/>
+                PREFIX inference: <http://example.org/swot/inference/>
+                
+                CONSTRUCT {
+                  ?observation ?p ?o
+                }
+                WHERE {
+                  ?observation rdf:type sosa:Observation ;
+                               ?p ?o .
+                
+                  FILTER NOT EXISTS { ?observation inference:processed true }             
+                }
+                """;
         Model model;
         try (RDFConnection conn = RDFConnection.connectPW(triplestoreEndpoint + "/" + triplestoreDataset,
                 triplestoreUsername, triplestorePassword)) {
@@ -71,9 +89,9 @@ public class SemanticReasoner {
 
     private List<Rule> loadRules() {
         // Cargando archivo de reglas usando springboot resouceLoader
-        try{
-        Resource rulesResource = resourceLoader.getResource("classpath:" + rulesFileName);
-        return Rule.rulesFromURL(rulesResource.getURL().toString());
+        try {
+            org.springframework.core.io.Resource rulesResource = resourceLoader.getResource("classpath:" + rulesFileName);
+            return Rule.rulesFromURL(rulesResource.getURL().toString());
         } catch (IOException e) {
             throw new RuntimeException("Error loading rules: " + e.getMessage());
         }
@@ -89,11 +107,20 @@ public class SemanticReasoner {
             countInferences++;
         }
 
-        // Guardar las inferencias en el triplestore
+        // Marcar observaciones como procesadas
+        Model processedMarks = ModelFactory.createDefaultModel();
+        ResIterator observations = newInferences.listSubjects();
+        while (observations.hasNext()) {
+            Resource observation = observations.nextResource();
+            processedMarks.add(observation, ResourceFactory.createProperty("http://example.org/swot/inference/processed"), ResourceFactory.createTypedLiteral(true));
+        }
+
+        // Guardar las inferencias y marcas en el triplestore
         try (RDFConnection conn = RDFConnection.connectPW(triplestoreEndpoint + "/" + triplestoreDataset,
                 triplestoreUsername, triplestorePassword)) {
             conn.load(newInferences); // Cargar el modelo de inferencias en el triplestore
-            log.info("Inferences added: {}", countInferences );
+            conn.load(processedMarks); // Marcar las observaciones como procesadas
+            log.info("Inferences added: {} - Elapsed time: {}", countInferences, System.currentTimeMillis() - elapsedTime);
         } catch (Exception e) {
             log.error("Error storing inferences: {}", e.getMessage());
         }

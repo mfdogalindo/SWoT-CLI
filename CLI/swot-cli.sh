@@ -95,6 +95,9 @@ dependencies {
     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'
     implementation 'org.springframework.integration:spring-integration-mqtt'
     implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }
 EOT
 
