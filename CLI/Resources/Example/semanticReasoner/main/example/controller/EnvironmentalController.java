@@ -1,4 +1,4 @@
-package PackagePlaceHolder.example.controllers;
+package PackagePlaceHolder.example.controller;
 
 import PackagePlaceHolder.example.models.*;
 import PackagePlaceHolder.example.services.EnvironmentalInferencesServices;
@@ -11,11 +11,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
-public class ApiGateway {
+public class EnvironmentalController {
 
     @Autowired
     private EnvironmentalInferencesServices service;
-    
+
     @GetMapping("/temperature/alerts")
     public List<TemperatureAlert> getTemperatureAlerts() {
         return service.getTemperatureAlerts();
@@ -40,4 +40,5 @@ public class ApiGateway {
     public List<Observation> getObservations() {
         return service.getObservations();
     }
+
 }

@@ -1,4 +1,4 @@
-package com.swot.visualization.example.config;
+package PackagePlaceHolder.example.config;
 
 
 import org.springframework.boot.web.client.RestTemplateBuilder;

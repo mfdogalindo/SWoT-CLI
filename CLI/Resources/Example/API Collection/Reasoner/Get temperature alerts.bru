@@ -1,0 +1,11 @@
+meta {
+  name: Get temperature alerts
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8082/api/v1/temperature/alerts
+  body: none
+  auth: none
+}

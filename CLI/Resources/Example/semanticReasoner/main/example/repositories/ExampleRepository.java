@@ -14,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @Repository
-public class EnvironmentalRepository {
+public class ExampleRepository {
 
     @Value("${TRIPLESTORE_URL:http://localhost:3030}")
     private String triplestoreEndpoint;

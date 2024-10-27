@@ -81,8 +81,31 @@ generate_spring_boot_project() {
     # Copiar archivos de ejemplo de carpeta Example/$service_name/resources
     cp -R "$RESOURCES_DIR/Example/$service_name/resources/"* "$resources_path/"
 
-    # Actualizar build.gradle con dependencias adicionales
+# Actualizar build.gradle con dependencias adicionales
+cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias comunes
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+
+EOT
+
+# si el nombre del servicio contiene la palabra "sensor o Mapper", agregar dependencias adicionales
+if [[ "$service_name" == *"sensor"* ]] || [[ "$service_name" == *"mapper"* ]]; then
     cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias para MQTT
+dependencies {
+    implementation 'org.springframework.integration:spring-integration-mqtt'
+}
+EOT
+fi
+
+# si el nombre del servicio contiene la palabra "semantic", agregar dependencias adicionales
+if [[ "$service_name" == *"semantic"* ]]; then
+    cat <<EOT >> "$project_dir/$service_name/build.gradle"
+
+// Depenedencias adicionales para Jena (RDF)
 ext{
 	JENA_VERSION="5.1.0"
 }    
@@ -93,13 +116,40 @@ dependencies {
     implementation "org.apache.jena:jena-arq:\$JENA_VERSION"
 	implementation "org.apache.jena:jena-rdfconnection:\$JENA_VERSION"
     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'
-    implementation 'org.springframework.integration:spring-integration-mqtt'
-    implementation 'org.springframework.boot:spring-boot-starter-logging'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+
+EOT
+fi
+
+# Si el nombre del servicio contiene la palabra "gateway", agregar dependencias adicionales
+if [[ "$service_name" == *"gateway"* ]]; then
+    cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias para Spring Cloud Gateway
+ext{
+	set('springCloudVersion', "2023.0.3")
+}   
+dependencies {
+    	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-mvc'
+}
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:\${springCloudVersion}"
+	}
+}
+
+EOT
+fi
+
+# Si el nombre del servicio contiene la palabra "visualization", agregar dependencias adicionales
+if [[ "$service_name" == *"visualization"* ]]; then
+    cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias para Thymeleaf para la visualización
+dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }
+
 EOT
+fi
 
     echo "Proyecto Spring Boot para $service_name generado exitosamente con código de ejemplo y dependencias adicionales."
 }

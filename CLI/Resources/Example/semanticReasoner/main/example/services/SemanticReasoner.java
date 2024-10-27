@@ -1,7 +1,7 @@
-package PackagePlaceHolder.example;
+package PackagePlaceHolder.example.services;
 
+import PackagePlaceHolder.example.repositories.ExampleRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.jena.query.QueryExecution;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.reasoner.Reasoner;
@@ -21,6 +21,9 @@ public class SemanticReasoner {
 
     @Autowired
     ResourceLoader resourceLoader;
+
+    @Autowired
+    private ExampleRepository repository;
 
     @Value("${TRIPLESTORE_URL:http://localhost:3030}")
     private String triplestoreEndpoint;
@@ -77,14 +80,7 @@ public class SemanticReasoner {
                   FILTER NOT EXISTS { ?observation inference:processed true }             
                 }
                 """;
-        Model model;
-        try (RDFConnection conn = RDFConnection.connectPW(triplestoreEndpoint + "/" + triplestoreDataset,
-                triplestoreUsername, triplestorePassword)) {
-            try (QueryExecution qexec = conn.query(queryString)) {
-                model = qexec.execConstruct();
-            }
-        }
-        return model;
+        return repository.queryModel(queryString);
     }
 
     private List<Rule> loadRules() {

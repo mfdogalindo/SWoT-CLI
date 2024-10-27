@@ -1,0 +1,18 @@
+server:
+  port: 8080
+    
+spring:
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: reasoner_route
+            uri: ${REASONER_URI:http://localhost:8082}
+            predicates:
+              - Path=/api/v1/reasoner/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "/api/v1/reasoner/(?<remaining>.*)"
+                  replacement: "/api/v1/${remaining}"
+

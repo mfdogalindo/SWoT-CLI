@@ -1,12 +1,12 @@
-package com.swot.visualization.example.controllers;
+package PackagePlaceHolder.example.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import com.swot.visualization.example.models.DashboardResponse;
-import com.swot.visualization.example.services.DataService;
+import PackagePlaceHolder.example.models.DashboardResponse;
+import PackagePlaceHolder.example.services.DataService;
 
 @Controller
 @RequestMapping("/dashboard")
