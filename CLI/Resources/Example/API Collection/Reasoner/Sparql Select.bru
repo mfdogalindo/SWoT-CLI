@@ -1,0 +1,36 @@
+meta {
+  name: Sparql Select
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://localhost:8082/sparql/select
+  body: json
+  auth: none
+}
+
+body:json {
+  {"query": "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10"}
+}
+
+body:text {
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  PREFIX sosa: <http://www.w3.org/ns/sosa/>
+  PREFIX swot: <http://example.org/swot/property/>
+  PREFIX inference: <http://example.org/swot/inference/>
+  
+  CONSTRUCT {
+    ?observation ?p ?o
+  }
+  WHERE {
+    ?observation rdf:type sosa:Observation ;
+                 ?p ?o .
+    
+    FILTER NOT EXISTS { ?observation inference:temperatureAlert ?tempAlert }
+    FILTER NOT EXISTS { ?observation inference:airQualityStatus ?airQualityStatus }
+    FILTER NOT EXISTS { ?observation inference:comfortLevel ?comfort }
+    FILTER NOT EXISTS { ?observation inference:humidityLevel ?humidityLevel }
+  }
+  
+}

@@ -15,4 +15,13 @@ spring:
                 args:
                   regexp: "/api/v1/reasoner/(?<remaining>.*)"
                   replacement: "/api/v1/${remaining}"
+          - id: sparql
+            uri: ${REASONER_URI:http://localhost:8082}
+            predicates:
+              - Path=/sparql/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "/sparql/(?<remaining>.*)"
+                  replacement: "/sparql/${remaining}"
 
