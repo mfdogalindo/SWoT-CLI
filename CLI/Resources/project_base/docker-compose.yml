@@ -40,6 +40,7 @@ services:
     depends_on:
       - mosquitto
       - fuseki
+      - sensor_simulator
     environment:
       - MQTT_BROKER=tcp://mosquitto:1883
       - MQTT_CLIENT=semantic_mapper
@@ -52,12 +53,13 @@ services:
       - fuseki-network
       - mqtt-network
 
-  semantic_reasoner:
+  reasoner:
     build: ./semanticreasoner
     ports:
-      - "8081:8081"
+      - "8082:8082"
     depends_on:
       - fuseki
+      - semantic_mapper
     environment:
       - TRIPLESTORE_URL=http://fuseki:3030
       - TRIPLESTORE_DATASET=swot
@@ -65,30 +67,37 @@ services:
       - TRIPLESTORE_PASSWORD=admin123
     networks:
       - fuseki-network
+      - reasoner-network
 
-  api_gateway:
+  gateway:
     build: ./apigateway
     ports:
       - "8080:8080"
     depends_on:
-      - fuseki
+      - reasoner
     environment:
-      - TRIPLESTORE_URL=http://fuseki:3030
-      - TRIPLESTORE_DATASET=swot
-      - TRIPLESTORE_USERNAME=admin
-      - TRIPLESTORE_PASSWORD=admin123
+      - REASONER_URI=http://reasoner:8082
     networks:
-      - fuseki-network
+      - gateway-network
+      - reasoner-network
 
   visualization:
     build: ./visualization
     ports:
-      - "8082:8082"
+      - "8081:8081"
     depends_on:
-      - api_gateway
+      - gateway
+    environment:
+      - API_GATEWAY_URL=http://gateway:8080
+    networks:
+      - gateway-network
 
 networks:
   mqtt-network:
     driver: bridge
   fuseki-network:
+    driver: bridge
+  gateway-network:
+    driver: bridge
+  reasoner-network:
     driver: bridge

@@ -1,7 +1,6 @@
 package PackagePlaceHolder.example.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swot.semanticmapper.example.service.TripleStoreService;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.*;

@@ -32,7 +32,7 @@ class SensorSimulator {
     public void simulateSensorData() throws MqttException {
         String topic = "sensors/data";
         String sensorId = "sensor-" + UUID.randomUUID().toString().substring(0, 8);
-        double temperature = 20 + (random.nextDouble() * 15); // Temperature between 20 and 35
+        double temperature = 10 + (random.nextDouble() * 25); // Temperature between 20 and 35
         double humidity = 30 + (random.nextDouble() * 70);    // Humidity between 30 and 100
         int airQuality = random.nextInt(500);                 // AQI between 0 and 500
         long timestamp = System.currentTimeMillis();

@@ -7,8 +7,8 @@ PROJECTS_DIR="$SCRIPT_DIR/Projects"
 
 # Mostrar uso del script
 show_usage() {
-    echo "Uso: swot-cli.sh init <project-name> --ontology=<ontologies> | swot-cli.sh run <project-name>"
-    echo "Ejemplo: swot-cli.sh init my-swot-project --ontology=iot-lite,ssn,sosa"
+    echo "Uso: swot-cli.sh init <project-name> | swot-cli.sh run <project-name>"
+    echo "Ejemplo: swot-cli.sh init my-swot-project"
     echo "         swot-cli.sh run my-swot-project"
 }
 
@@ -81,8 +81,31 @@ generate_spring_boot_project() {
     # Copiar archivos de ejemplo de carpeta Example/$service_name/resources
     cp -R "$RESOURCES_DIR/Example/$service_name/resources/"* "$resources_path/"
 
-    # Actualizar build.gradle con dependencias adicionales
+# Actualizar build.gradle con dependencias adicionales
+cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias comunes
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+
+EOT
+
+# si el nombre del servicio contiene la palabra "sensor o Mapper", agregar dependencias adicionales
+if [[ "$service_name" == *"sensor"* ]] || [[ "$service_name" == *"mapper"* ]]; then
     cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias para MQTT
+dependencies {
+    implementation 'org.springframework.integration:spring-integration-mqtt'
+}
+EOT
+fi
+
+# si el nombre del servicio contiene la palabra "semantic", agregar dependencias adicionales
+if [[ "$service_name" == *"semantic"* ]]; then
+    cat <<EOT >> "$project_dir/$service_name/build.gradle"
+
+// Depenedencias adicionales para Jena (RDF)
 ext{
 	JENA_VERSION="5.1.0"
 }    
@@ -93,10 +116,40 @@ dependencies {
     implementation "org.apache.jena:jena-arq:\$JENA_VERSION"
 	implementation "org.apache.jena:jena-rdfconnection:\$JENA_VERSION"
     implementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'
-    implementation 'org.springframework.integration:spring-integration-mqtt'
-    implementation 'org.springframework.boot:spring-boot-starter-logging'
 }
+
 EOT
+fi
+
+# Si el nombre del servicio contiene la palabra "gateway", agregar dependencias adicionales
+if [[ "$service_name" == *"gateway"* ]]; then
+    cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias para Spring Cloud Gateway
+ext{
+	set('springCloudVersion', "2023.0.3")
+}   
+dependencies {
+    	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-mvc'
+}
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:\${springCloudVersion}"
+	}
+}
+
+EOT
+fi
+
+# Si el nombre del servicio contiene la palabra "visualization", agregar dependencias adicionales
+if [[ "$service_name" == *"visualization"* ]]; then
+    cat <<EOT >> "$project_dir/$service_name/build.gradle"
+// Dependencias para Thymeleaf para la visualización
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+}
+
+EOT
+fi
 
     echo "Proyecto Spring Boot para $service_name generado exitosamente con código de ejemplo y dependencias adicionales."
 }
@@ -104,10 +157,9 @@ EOT
 # Función para crear la estructura del proyecto
 create_project_structure() {
     local project_name="$1"
-    local ontologies="$2"
     local project_dir="$PROJECTS_DIR/$project_name"
 
-    echo "Creando proyecto $project_name con ontologías: $ontologies"
+    echo "Creando proyecto $project_name"
 
     # Crear directorio del proyecto
     mkdir -p "$project_dir"
@@ -116,9 +168,6 @@ create_project_structure() {
     for service in apigateway visualization semanticmapper semanticreasoner sensorsimulator; do
         generate_spring_boot_project "$project_name" "$service" "$project_dir"
     done
-
-    # Crear archivo de configuración con las ontologías seleccionadas
-    echo "$ontologies" > "$project_dir/ontologies.txt"
 
     # Copiar estructura base del proyecto
     cp -R "$RESOURCES_DIR/project_base/"* "$project_dir/"
@@ -167,10 +216,9 @@ main() {
             fi
             # Extraer nombre del proyecto y ontologías
             project_name="$2"
-            ontologies="${3#--ontology=}"
 
             # Crear la estructura del proyecto
-            create_project_structure "$project_name" "$ontologies"
+            create_project_structure "$project_name" 
             ;;
         run)
             if [ -z "$2" ]; then

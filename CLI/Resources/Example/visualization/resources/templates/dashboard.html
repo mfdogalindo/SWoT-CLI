@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWoT Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <style>
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-dark bg-primary mb-4">
+    <div class="container">
+        <span class="navbar-brand">SWoT Dashboard</span>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <!-- Temperature Alerts Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Temperature Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Humidity card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Humidity Levels</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Air Quality Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Air Quality Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="airQualityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comfort Levels Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Comfort Levels</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="comfortChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts Table -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Sensor</th>
+                                <th>Type</th>
+                                <th>Inference</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody id="alertsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Dashboard JavaScript -->
+<script th:inline="javascript">
+    // Datos del dashboard desde Thymeleaf
+    let dashboardData = /*[[${dashboard}]]*/ {};
+
+    // Declara las variables para almacenar las instancias de los gráficos
+    let temperatureChart, humidityChart, airQualityChart, comfortChart;
+
+    // Función para actualizar los gráficos
+    function updateCharts() {
+        // Destruye gráficos existentes antes de redibujar
+        if (temperatureChart) temperatureChart.destroy();
+        if (humidityChart) humidityChart.destroy();
+        if (airQualityChart) airQualityChart.destroy();
+        if (comfortChart) comfortChart.destroy();
+
+        // Gráfico de temperatura
+        temperatureChart = new Chart(document.getElementById('temperatureChart'), {
+            type: 'bar',
+            data: {
+                labels: ['High', 'Low', 'Normal'],
+                datasets: [{
+                    label: 'Temperature Alerts',
+                    data: countAlertsByLevel(dashboardData.temperatureAlerts),
+                    backgroundColor: ['#dc3545', '#0d6efd', '#198754']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Gráfico de humedad
+        humidityChart = new Chart(document.getElementById('humidityChart'), {
+            type: 'bar',
+            data: {
+                labels: ['High', 'Low', 'Normal'],
+                datasets: [{
+                    label: 'Humidity Alerts',
+                    data: countHumidityByStatus(dashboardData.humidityStatus),
+                    backgroundColor: ['#dc3545', '#0d6efd', '#198754']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Gráfico de calidad del aire
+        airQualityChart = new Chart(document.getElementById('airQualityChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Good', 'Moderate', 'Poor'],
+                datasets: [{
+                    data: countAirQualityByStatus(dashboardData.airQualityStatuses),
+                    backgroundColor: ['#198754', '#ffc107', '#dc3545']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Gráfico de niveles de confort
+        comfortChart = new Chart(document.getElementById('comfortChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Temperature', 'Humidity'],
+                datasets: [{
+                    label: 'Current Conditions',
+                    data: calculateComfortMetrics(dashboardData.comfortLevels),
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.2)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // Función para determinar el tipo de alerta
+    function getAlertType(alert) {
+        return alert.temperature ? 'Temperature' :
+               alert.airQuality ? 'Air Quality' :
+               'Humidity';
+    }
+
+    // Función para actualizar la tabla de alertas
+    function updateAlertsTable() {
+        const tbody = document.getElementById('alertsTableBody');
+        tbody.innerHTML = '';
+
+        // Combinar y ordenar todas las alertas por timestamp
+        const allAlerts = [
+            ...dashboardData.temperatureAlerts,
+            ...dashboardData.airQualityStatuses
+        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Mostrar las 10 alertas más recientes
+        allAlerts.slice(0, 10).forEach(alert => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${new Date(alert.timestamp).toLocaleString()}</td>
+                <td>${alert.sensorId}</td>
+                <td>${getAlertType(alert)}</td>
+                <td>${alert.alertLevel || alert.status}</td>
+                <td>${alert.temperature || alert.airQuality}</td>
+                <td><span class="badge ${getStatusBadgeClass(alert)}">${getStatusText(alert)}</span></td>
+            `;
+        });
+    }
+
+    // Funciones auxiliares
+    function countAlertsByLevel(alerts) {
+        const counts = {High: 0, Low: 0, Normal: 0};
+        alerts.forEach(alert => counts[alert.alertLevel]++);
+        return Object.values(counts);
+    }
+
+    function countAirQualityByStatus(statuses) {
+        const counts = {Good: 0, Moderate: 0, Poor: 0};
+        statuses.forEach(status => counts[status.status]++);
+        return Object.values(counts);
+    }
+
+    function countHumidityByStatus(statuses) {
+        const counts = {High: 0, Low: 0, Normal: 0};
+        statuses.forEach(status => counts[status.status]++);
+        return Object.values(counts);
+    }
+
+    function calculateComfortMetrics(comfortLevels) {
+        return comfortLevels.map(level => (level.temperature + level.humidity) / 2);
+    }
+
+    function getStatusBadgeClass(alert) {
+        return alert.alertLevel === 'High' ? 'bg-danger' :
+               alert.alertLevel === 'Low' ? 'bg-warning' :
+               'bg-success';
+    }
+
+    function getStatusText(alert) {
+        return alert.alertLevel || alert.status;
+    }
+
+    // Inicializar dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCharts();
+        updateAlertsTable();
+
+        // Actualizar cada 30 segundos
+        setInterval(function() {
+            fetch('/dashboard/data')
+                .then(response => {
+                    if (!response.ok) throw new Error("Error en la respuesta del servidor");
+                    return response.json();
+                })
+                .then(data => {
+                    dashboardData = data;
+                    updateCharts();
+                    updateAlertsTable();
+                })
+                .catch(error => console.error("Error al actualizar los datos:", error));
+        }, 60000);
+    });
+</script>
+</body>
+</html>
