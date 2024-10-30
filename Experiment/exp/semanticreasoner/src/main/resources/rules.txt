@@ -1,0 +1,58 @@
+# Declaraciones de prefijos
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix swot: <http://example.org/swot/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# Rule 1: High Temperature Alert (> 35°C)
+[highTempAlert:
+    (?obs rdf:type sosa:Observation)
+    (?obs sosa:hasResult ?result)
+    (?result qudt:unit qudt:DegreeCelsius)
+    (?result qudt:numericValue ?temp)
+    greaterThan(?temp, 35.0)
+    (?obs sosa:madeBySensor ?sensor)
+    (?obs sosa:resultTime ?time)
+    ->
+    (?obs swot:highTemperatureAlert "true"^^xsd:string)
+]
+
+# Rule 2: Low Temperature Alert (< 0°C)
+[lowTempAlert:
+    (?obs rdf:type sosa:Observation)
+    (?obs sosa:hasResult ?result)
+    (?result qudt:unit qudt:DegreeCelsius)
+    (?result qudt:numericValue ?temp)
+    lessThan(?temp, 0.0)
+    (?obs sosa:madeBySensor ?sensor)
+    (?obs sosa:resultTime ?time)
+    ->
+    (?obs swot:lowTemperature "true"^^xsd:boolean)
+]
+
+# Rule 3: Poor Air Quality Alert (AQI > 150)
+[poorAirQualityAlert:
+    (?obs rdf:type sosa:Observation)
+    (?obs sosa:hasResult ?result)
+    (?result qudt:unit qudt:AQI)
+    (?result qudt:numericValue ?aqi)
+    greaterThan(?aqi, 150.0)
+    (?obs sosa:madeBySensor ?sensor)
+    (?obs sosa:resultTime ?time)
+    ->
+    (?obs swot:airQualityAlert "true"^^xsd:boolean)
+]
+
+# Rule 4: High Noise Level Alert (> 85 dB)
+[highNoiseAlert:
+    (?obs rdf:type sosa:Observation)
+    (?obs sosa:hasResult ?result)
+    (?result qudt:unit qudt:Decibel)
+    (?result qudt:numericValue ?noise)
+    greaterThan(?noise, 85.0)
+    (?obs sosa:madeBySensor ?sensor)
+    (?obs sosa:resultTime ?time)
+    ->
+    (?obs swot:NoiseAlert "true"^^xsd:boolean)
+]

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sensor Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+</head>
+<body class="bg-gray-100">
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Sensor Monitoring Dashboard</h1>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-2">Temperature Alerts</h3>
+            <p id="tempAlerts" class="text-3xl font-bold text-red-600">-</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-2">Air Quality Alerts</h3>
+            <p id="aqiAlerts" class="text-3xl font-bold text-red-600">-</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-2">Noise Alerts</h3>
+            <p id="noiseAlerts" class="text-3xl font-bold text-red-600">-</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Temperature Readings</h3>
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Air Quality Index</h3>
+            <canvas id="aqiChart"></canvas>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Noise Levels</h3>
+            <canvas id="noiseChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Latest Readings Table -->
+    <div class="bg-white rounded-lg shadow mt-8">
+        <div class="p-6">
+            <h3 class="text-lg font-semibold mb-4">Latest Readings</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sensor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temperature (°C)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AQI</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Noise (dB)</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    </tr>
+                    </thead>
+                    <tbody id="readingsTableBody">
+                    <!-- Table content will be dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    let temperatureChart, aqiChart, noiseChart;
+
+    // Initialize charts
+    function initializeCharts() {
+        const chartConfig = {
+            type: 'line',
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
+
+        // Temperature Chart
+        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+        temperatureChart = new Chart(tempCtx, {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: []
+            }
+        });
+
+        // AQI Chart
+        const aqiCtx = document.getElementById('aqiChart').getContext('2d');
+        aqiChart = new Chart(aqiCtx, {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: []
+            }
+        });
+
+        // Noise Chart
+        const noiseCtx = document.getElementById('noiseChart').getContext('2d');
+        noiseChart = new Chart(noiseCtx, {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: []
+            }
+        });
+    }
+
+    // Update dashboard data
+    function updateDashboard() {
+        fetch('/dashboard/data')
+            .then(response => response.json())
+            .then(data => {
+                updateCharts(data);
+                updateTable(data);
+                updateAlerts(data);
+            })
+            .catch(error => console.error('Error fetching dashboard data:', error));
+    }
+
+    // Update charts with new data
+    function updateCharts(data) {
+        const sensors = [...new Set(data.temperatureObservations.map(obs => obs.sensorId))];
+        const timestamps = [...new Set(data.temperatureObservations.map(obs => new Date(obs.time).toLocaleTimeString()))]
+            .slice(-20);
+
+        // Update Temperature Chart
+        temperatureChart.data.labels = timestamps;
+        temperatureChart.data.datasets = sensors.map(sensorId => {
+            const sensorData = data.temperatureObservations
+                .filter(obs => obs.sensorId === sensorId)
+                .slice(-20);
+            return {
+                label: `Sensor ${sensorId.split('-')[1]}`,
+                data: sensorData.map(obs => obs.value),
+                borderColor: getRandomColor(),
+                fill: false
+            };
+        });
+        temperatureChart.update();
+
+        // Update AQI Chart
+        aqiChart.data.labels = timestamps;
+        aqiChart.data.datasets = sensors.map(sensorId => {
+            const sensorData = data.airQualityObservations
+                .filter(obs => obs.sensorId === sensorId)
+                .slice(-20);
+            return {
+                label: `Sensor ${sensorId.split('-')[1]}`,
+                data: sensorData.map(obs => obs.value),
+                borderColor: getRandomColor(),
+                fill: false
+            };
+        });
+        aqiChart.update();
+
+        // Update Noise Chart
+        noiseChart.data.labels = timestamps;
+        noiseChart.data.datasets = sensors.map(sensorId => {
+            const sensorData = data.noiseObservations
+                .filter(obs => obs.sensorId === sensorId)
+                .slice(-20);
+            return {
+                label: `Sensor ${sensorId.split('-')[1]}`,
+                data: sensorData.map(obs => obs.value),
+                borderColor: getRandomColor(),
+                fill: false
+            };
+        });
+        noiseChart.update();
+    }
+
+    // Update table with latest readings
+    function updateTable(data) {
+        const tableBody = document.getElementById('readingsTableBody');
+        const sensors = [...new Set(data.temperatureObservations.map(obs => obs.sensorId))];
+
+        let tableContent = '';
+        sensors.forEach(sensorId => {
+            const tempReading = data.temperatureObservations.find(obs => obs.sensorId === sensorId);
+            const aqiReading = data.airQualityObservations.find(obs => obs.sensorId === sensorId);
+            const noiseReading = data.noiseObservations.find(obs => obs.sensorId === sensorId);
+
+            if (tempReading && aqiReading && noiseReading) {
+                const rowClass = tempReading.alert || aqiReading.alert || noiseReading.alert ? 'bg-red-50' : '';
+                tableContent += `
+                    <tr class="${rowClass}">
+                        <td class="px-6 py-4 whitespace-nowrap">Sensor ${sensorId.split('-')[1]}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${tempReading.value.toFixed(1)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${aqiReading.value.toFixed(0)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${noiseReading.value.toFixed(1)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${new Date(tempReading.time).toLocaleString()}</td>
+                    </tr>
+                `;
+            }
+        });
+        tableBody.innerHTML = tableContent;
+    }
+
+    // Update alert counters
+    function updateAlerts(data) {
+        const tempHtAlerts = data.temperatureObservations.filter(obs => obs.highTemperatureAlert).length;
+        const tempLtAlerts = data.temperatureObservations.filter(obs => obs.lowTemperatureAlert).length;
+        const tempObservations = data.temperatureObservations.length;
+        const aqiAlerts = data.airQualityObservations.filter(obs => obs.alert).length;
+        const aqiObservations = data.airQualityObservations.length;
+        const noiseAlerts = data.noiseObservations.filter(obs => obs.alert).length;
+        const noiseObservations = data.noiseObservations.length;
+
+        document.getElementById('tempAlerts').textContent = tempHtAlerts + ' / ' + tempLtAlerts + ' / ' + tempObservations;
+        document.getElementById('aqiAlerts').textContent = aqiAlerts + ' / ' + aqiObservations;
+        document.getElementById('noiseAlerts').textContent = noiseAlerts + ' / ' + noiseObservations;
+    }
+
+    // Utility function to generate random colors for chart lines
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+        initializeCharts();
+        updateDashboard();
+        // Update every 2 minutes
+        setInterval(updateDashboard, 120000);
+    });
+</script>
+</body>
+</html>
