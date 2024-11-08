@@ -1,4 +1,4 @@
-package com.swot.sensorsimulator.example;
+package PackagePlaceHolder.demo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -16,7 +16,7 @@ import java.util.Random;
 @Slf4j
 @Component
 class SensorSimulator {
-    
+
     private final MqttClient mqttClient;
     private final Random random = new Random();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -55,21 +55,21 @@ class SensorSimulator {
         return locations;
     }
 
-    @Scheduled(fixedRate = 10000) // Cada 10 segundos
+    @Scheduled(fixedRate = 60000) // Cada minuto
     public void simulateSensorData() {
         try {
             for (Map.Entry<String, SensorLocation> sensor : sensorLocations.entrySet()) {
-                String nodeId = sensor.getKey();
+                String sensorId = sensor.getKey();
                 SensorLocation location = sensor.getValue();
 
-                // Generar lecturas aleatorias dentro de los rangos especificados
-                double temperature = 15 + (random.nextDouble() * 25); // Entre 15°C y 40°C
-                double humidity = 30 + (random.nextDouble() * 70); // Entre 30% y 100%
-                int aqi = random.nextInt(300); // Entre 0 y 300 AQI
-                double noise = 30 + (random.nextDouble() * 70); // Entre 30 dB y 100 dB
+                // Generate random sensor data
+                double temperature = 15 + (random.nextDouble() * 25); //  15°C - 40°C
+                double humidity = 30 + (random.nextDouble() * 70); //  30% - 100%
+                int aqi = 50 + random.nextInt(300); //  50 - 350 AQI
+                double noise = 30 + (random.nextDouble() * 70); //  30 dB - 100 dB
 
                 SensorReading reading = new SensorReading(
-                        nodeId,
+                        sensorId,
                         temperature,
                         humidity,
                         aqi,
@@ -86,27 +86,17 @@ class SensorSimulator {
 
                 mqttClient.publish(topic, message);
 
-                log.info("Published data for Node {}: {}", nodeId, payload);
+                log.info("Published data for sensor {}: {}", sensorId, payload);
 
-                // Generar alertas si se superan los umbrales
-                if (temperature > 35 || temperature < 0) {
-                    log.warn("Temperature alert for sensor {}: {}", nodeId, temperature);
-                }
-                if (aqi > 150) {
-                    log.warn("Air quality alert for sensor {}: {}", nodeId, aqi);
-                }
-                if (noise > 85) {
-                    log.warn("Noise level alert for sensor {}: {}", nodeId, noise);
-                }
             }
         } catch (Exception e) {
-            log.error("Error publishing node data", e);
+            log.error("Error publishing sensor data", e);
         }
     }
 
     @PostConstruct
     public void startSimulation() {
         log.info("Sensor simulator initialized with {} sensors", sensorLocations.size());
-        simulateSensorData(); // Primera ejecución inmediata
+        simulateSensorData();
     }
 }

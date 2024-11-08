@@ -1,4 +1,4 @@
-package com.swot.sensorsimulator.example;
+package PackagePlaceHolder.demo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class SensorReading {
     @JsonProperty("id")
-    private String nodeId;
+    private String sensorId;
     private double temperature;
     private double humidity;
     @JsonProperty("airQuality")
@@ -19,10 +19,10 @@ public class SensorReading {
     private long timestamp;
 
     // Constructor
-    public SensorReading(String nodeId, double temperature, double humidity,
+    public SensorReading(String sensorId, double temperature, double humidity,
                          int aqi, double noise, double latitude, double longitude,
                          String zone, long timestamp) {
-        this.nodeId = nodeId;
+        this.sensorId = sensorId;
         this.temperature = temperature;
         this.humidity = humidity;
         this.aqi = aqi;

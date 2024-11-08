@@ -1,0 +1,62 @@
+# Prefijos
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+@prefix sosa: <http://www.w3.org/ns/sosa/>
+@prefix qudt: <http://qudt.org/schema/qudt#>
+@prefix alert: <%salert#>
+@prefix inference: <%sinference#>
+
+# Regla para temperatura alta
+[highTemperature:
+    (?obs rdf:type sosa:Observation),
+    (?obs sosa:observedProperty sosa:Temperature),
+    (?obs sosa:hasResult ?value),
+    (?value qudt:numericValue ?temp),
+    greaterThan(?temp, 35.0),
+    noValue(?obs inference:processed true)
+    ->
+    (?obs alert:hasAlert 'HighTemperature'),
+    (?obs alert:severity 'High'),
+    (?obs alert:message 'Temperature exceeds 35°C')
+]
+
+# Regla para calidad del aire deficiente
+[poorAirQuality:
+    (?obs rdf:type sosa:Observation),
+    (?obs sosa:observedProperty sosa:AirQuality),
+    (?obs sosa:hasResult ?value),
+    (?value qudt:numericValue ?aqi),
+    greaterThan(?aqi, 300.0),
+    noValue(?obs inference:processed true)
+    ->
+    (?obs alert:hasAlert 'PoorAirQuality'),
+    (?obs alert:severity 'Critical'),
+    (?obs alert:message 'Air Quality Index exceeds 300')
+]
+
+# Regla para nivel de ruido alto
+[highNoise:
+    (?obs rdf:type sosa:Observation),
+    (?obs sosa:observedProperty sosa:NoiseLevel),
+    (?obs sosa:hasResult ?value),
+    (?value qudt:numericValue ?noise),
+    greaterThan(?noise, 85.0),
+    noValue(?obs inference:processed true)
+    ->
+    (?obs alert:hasAlert 'HighNoise'),
+    (?obs alert:severity 'Medium'),
+    (?obs alert:message 'Noise level exceeds 85dB')
+]
+
+# Regla para humedad alta
+[highHumidity:
+    (?obs rdf:type sosa:Observation),
+    (?obs sosa:observedProperty sosa:Humidity),
+    (?obs sosa:hasResult ?value),
+    (?value qudt:numericValue ?humidity),
+    greaterThan(?humidity, 80.0),
+    noValue(?obs inference:processed true)
+    ->
+    (?obs alert:hasAlert 'HighHumidity'),
+    (?obs alert:severity 'Medium'),
+    (?obs alert:message 'Humidity exceeds 80%%')
+]

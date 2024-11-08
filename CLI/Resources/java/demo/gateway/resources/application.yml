@@ -1,0 +1,69 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: reasoner_route
+            uri: ${API_URL:http://localhost:8081}
+            predicates:
+              - Path=/api/v1/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "/api/v1/(?<remaining>.*)"
+                  replacement: "/api/v1/${remaining}"
+          - id: sparql
+            uri: ${API_URL:http://localhost:8081}
+            predicates:
+              - Path=/sparql/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "/sparql/(?<remaining>.*)"
+                  replacement: "/sparql/${remaining}"
+          # Swagger UI route
+          - id: swagger_ui
+            uri: ${API_URL:http://localhost:8081}
+            predicates:
+              - Path=/swagger-ui.html, /swagger-ui/**, /webjars/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "^/(.*)"
+                  replacement: "/$1"
+
+          # OpenAPI docs route
+          - id: api_docs
+            uri: ${API_URL:http://localhost:8081}
+            predicates:
+              - Path=/api-docs, /api-docs/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "^/(.*)"
+                  replacement: "/$1"
+
+                  # Dashboard route
+          - id: dashboard_route
+            uri: ${DASHBOARD_URL:http://localhost:8090}
+            predicates:
+              - Path=/dashboard/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "/dashboard/(?<remaining>.*)"
+                  replacement: "/${remaining}"
+
+          # Jena Fuseki route
+          - id: jena_route
+            uri: ${JENA_URL:http://localhost:3030}
+            predicates:
+              - Path=/jena/**
+            filters:
+              - name: RewritePath
+                args:
+                  regexp: "/jena/(?<remaining>.*)"
+                  replacement: "/${remaining}"

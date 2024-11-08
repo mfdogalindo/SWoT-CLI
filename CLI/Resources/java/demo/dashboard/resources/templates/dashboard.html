@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>SWOT Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sensor-card {
+            transition: all 0.3s ease;
+        }
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .alert-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            padding: 5px 10px;
+            border-radius: 50%;
+            font-size: 0.8em;
+        }
+        .severity-High { background-color: #dc3545; }
+        .severity-Medium { background-color: #ffc107; }
+        .severity-Low { background-color: #0dcaf0; }
+        .chart-container {
+            position: relative;
+            height: 300px;  /* Altura fija para el contenedor */
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-speedometer2"></i> SWOT Dashboard
+        </a>
+        <div class="navbar-nav">
+            <a class="nav-link" href="/"><i class="bi bi-house"></i> Dashboard</a>
+            <a class="nav-link" href="/sensors"><i class="bi bi-cpu"></i> Sensors</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- Sensor Readings Section -->
+    <div class="row">
+        <!-- Temperature Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card sensor-card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-thermometer-half"></i> Temperature
+                    </h5>
+                    <span th:if="${temperatureAlerts != null && !temperatureAlerts.content.empty}"
+                          class="alert-badge bg-danger">
+                            <span th:text="${temperatureAlerts.content.size()}">0</span> Alerts
+                        </span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                    <div class="mt-3" th:if="${temperatureAlerts != null && !temperatureAlerts.content.empty}">
+                        <h6>Recent Alerts</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th>Sensor</th>
+                                    <th>Value</th>
+                                    <th>Severity</th>
+                                    <th>Time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="alert : ${temperatureAlerts.content}"
+                                    th:class="${'table-' + (alert.severity == 'High' ? 'danger' :
+                                                                   alert.severity == 'Medium' ? 'warning' : 'info')}">
+                                    <td th:text="${alert.sensorId}">Sensor</td>
+                                    <td th:text="${alert.value + '°C'}">Value</td>
+                                    <td th:text="${alert.severity}">Severity</td>
+                                    <td th:text="${#temporals.format(alert.timestamp, 'HH:mm')}">Time</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Humidity Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card sensor-card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-moisture"></i> Humidity
+                    </h5>
+                    <span th:if="${humidityAlerts != null && !humidityAlerts.content.empty}"
+                          class="alert-badge bg-danger">
+                            <span th:text="${humidityAlerts.content.size()}">0</span> Alerts
+                        </span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                    <div class="mt-3" th:if="${humidityAlerts != null && !humidityAlerts.content.empty}">
+                        <h6>Recent Alerts</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th>Sensor</th>
+                                    <th>Value</th>
+                                    <th>Severity</th>
+                                    <th>Time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="alert : ${humidityAlerts.content}"
+                                    th:class="${'table-' + (alert.severity == 'High' ? 'danger' :
+                                                                   alert.severity == 'Medium' ? 'warning' : 'info')}">
+                                    <td th:text="${alert.sensorId}">Sensor</td>
+                                    <td th:text="${alert.value + '%'}">Value</td>
+                                    <td th:text="${alert.severity}">Severity</td>
+                                    <td th:text="${#temporals.format(alert.timestamp, 'HH:mm')}">Time</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Noise Level Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card sensor-card">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-volume-up"></i> Noise Level
+                    </h5>
+                    <span th:if="${noiseAlerts != null && !noiseAlerts.content.empty}"
+                          class="alert-badge bg-danger">
+                            <span th:text="${noiseAlerts.content.size()}">0</span> Alerts
+                        </span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="noiseChart"></canvas>
+                    </div>
+                    <div class="mt-3" th:if="${noiseAlerts != null && !noiseAlerts.content.empty}">
+                        <h6>Recent Alerts</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th>Sensor</th>
+                                    <th>Value</th>
+                                    <th>Severity</th>
+                                    <th>Time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="alert : ${noiseAlerts.content}"
+                                    th:class="${'table-' + (alert.severity == 'High' ? 'danger' :
+                                                                   alert.severity == 'Medium' ? 'warning' : 'info')}">
+                                    <td th:text="${alert.sensorId}">Sensor</td>
+                                    <td th:text="${alert.value + ' dB'}">Value</td>
+                                    <td th:text="${alert.severity}">Severity</td>
+                                    <td th:text="${#temporals.format(alert.timestamp, 'HH:mm')}">Time</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Air Quality Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card sensor-card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-wind"></i> Air Quality
+                    </h5>
+                    <span th:if="${airQualityAlerts != null && !airQualityAlerts.content.empty}"
+                          class="alert-badge bg-danger">
+                            <span th:text="${airQualityAlerts.content.size()}">0</span> Alerts
+                        </span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="airQualityChart"></canvas>
+                    </div>
+                    <div class="mt-3" th:if="${airQualityAlerts != null && !airQualityAlerts.content.empty}">
+                        <h6>Recent Alerts</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                <tr>
+                                    <th>Sensor</th>
+                                    <th>Value</th>
+                                    <th>Severity</th>
+                                    <th>Time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="alert : ${airQualityAlerts.content}"
+                                    th:class="${'table-' + (alert.severity == 'High' ? 'danger' :
+                                                                   alert.severity == 'Medium' ? 'warning' : 'info')}">
+                                    <td th:text="${alert.sensorId}">Sensor</td>
+                                    <td th:text="${alert.value + ' AQI'}">Value</td>
+                                    <td th:text="${alert.severity}">Severity</td>
+                                    <td th:text="${#temporals.format(alert.timestamp, 'HH:mm')}">Time</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Initialization -->
+<script th:inline="javascript">
+    // Función para crear gráficos
+    function createChart(canvasId, data, label, color) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+
+        // Destruir el gráfico existente si hay uno
+        if (window.charts && window.charts[canvasId]) {
+            window.charts[canvasId].destroy();
+        }
+
+        // Limitar la cantidad de puntos de datos
+        const limitedData = data.slice(-10); // Mostrar solo los últimos 10 puntos
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: limitedData.map(r => new Date(r.timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })),
+                datasets: [{
+                    label: label,
+                    data: limitedData.map(r => r.value),
+                    borderColor: color,
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            maxTicksLimit: 6
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 6
+                        }
+                    }
+                },
+                animation: {
+                    duration: 750
+                }
+            }
+        });
+
+        // Almacenar referencia al gráfico
+        if (!window.charts) window.charts = {};
+        window.charts[canvasId] = chart;
+
+        return chart;
+    }
+
+    // Objeto para almacenar las referencias a los charts
+    window.charts = {};
+
+    // Función para actualizar los datos
+    function updateCharts() {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Extraer datos del nuevo HTML
+                const temperatureData = JSON.parse(doc.getElementById('temperatureData').textContent);
+                const humidityData = JSON.parse(doc.getElementById('humidityData').textContent);
+                const noiseData = JSON.parse(doc.getElementById('noiseData').textContent);
+                const airQualityData = JSON.parse(doc.getElementById('airQualityData').textContent);
+
+                // Actualizar gráficos
+                createChart('temperatureChart', temperatureData, 'Temperature (°C)', '#0d6efd');
+                createChart('humidityChart', humidityData, 'Humidity (%)', '#0dcaf0');
+                createChart('noiseChart', noiseData, 'Noise (dB)', '#ffc107');
+                createChart('airQualityChart', airQualityData, 'AQI', '#198754');
+            })
+            .catch(error => console.error('Error updating charts:', error));
+    }
+
+    // Datos iniciales
+    const temperatureData = /*[[${temperatureReadings.content}]]*/ [];
+    const humidityData = /*[[${humidityReadings.content}]]*/ [];
+    const noiseData = /*[[${noiseReadings.content}]]*/ [];
+    const airQualityData = /*[[${airQualityReadings.content}]]*/ [];
+
+    // Crear gráficos iniciales
+    createChart('temperatureChart', temperatureData, 'Temperature (°C)', '#0d6efd');
+    createChart('humidityChart', humidityData, 'Humidity (%)', '#0dcaf0');
+    createChart('noiseChart', noiseData, 'Noise (dB)', '#ffc107');
+    createChart('airQualityChart', airQualityData, 'AQI', '#198754');
+
+    // Actualizar cada 30 segundos sin recargar la página completa
+    setInterval(updateCharts, 30000);
+</script>
+
+</body>
+</html>
