@@ -2,3 +2,7 @@
 CLI/Projects
 Experiment/exp/fuseki-data
 CLI/target
+.idea
+.vscode
+target
+Projects
