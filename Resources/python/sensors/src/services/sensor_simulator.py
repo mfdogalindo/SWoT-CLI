@@ -1,14 +1,15 @@
-from typing import Dict
-import time
 import logging
-from sensors.models.sensor_location import SensorLocation
-from sensors.services.sensor_data_generator import SensorDataGenerator
-from sensors.interfaces.message_publisher import MessagePublisher
+from typing import Dict
+
+from interfaces.message_publisher import MessagePublisher
+from models.sensor_location import SensorLocation
+from services.sensor_data_generator import SensorDataGenerator
+
 
 class SensorSimulator:
     """Main service coordinating the sensor simulation."""
-    
-    def __init__(self, 
+
+    def __init__(self,
                  publisher: MessagePublisher,
                  data_generator: SensorDataGenerator,
                  topic: str):
@@ -17,7 +18,7 @@ class SensorSimulator:
         self.topic = topic
         self.sensor_locations = self._initialize_sensor_locations()
         self.logger = logging.getLogger(__name__)
-        
+
     def _initialize_sensor_locations(self) -> Dict[str, SensorLocation]:
         """Initialize fixed sensor locations."""
         return {
@@ -32,7 +33,7 @@ class SensorSimulator:
             "NODE-009": SensorLocation(2.4494, -76.6194, "ZONE-CENTRAL"),
             "NODE-010": SensorLocation(2.4503, -76.6203, "ZONE-CENTRAL"),
         }
-    
+
     def simulate_readings(self) -> None:
         """Generate and publish readings for all sensors."""
         try:

@@ -1,0 +1,62 @@
+services:
+  jena:
+    image: stain/jena-fuseki
+    ports:
+      - "3030:3030"
+    volumes:
+      - ./jena/data:/fuseki
+    environment:
+      - ADMIN_PASSWORD=Oe8AUz9xPHbdskvn
+    networks:
+      - jena-network
+  mosquitto:
+    build:
+      context: ./mosquitto
+      dockerfile: Dockerfile
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - mosquitto-network
+
+  sensors:
+    build: ./sensors
+    environment:
+      - MQTT_BROKER=tcp://mosquitto:1883
+      - MQTT_TOPIC=sensors_swot
+      - SIMULATION_INTERVAL=60
+      - LOG_LEVEL=INFO
+    depends_on:
+      - mosquitto
+    networks:
+      - mosquitto-network
+
+  mapper:
+    build: ./mapper
+    depends_on:
+      - jena
+      - sensors
+      - mosquitto
+    environment:
+      - MQTT_BROKER=tcp://mosquitto:1883
+      - MQTT_TOPIC=sensors_swot
+      - SWOT_URL_PREFIX=http://swot.local/
+      - MQTT_CLIENT=CLIENT_6iyJI
+      - TRIPLESTORE_URL=http://jena:3030
+      - TRIPLESTORE_DATASET=swot
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=Oe8AUz9xPHbdskvn
+    networks:
+      - jena-network
+      - mosquitto-network
+
+networks:
+  mosquitto-network:
+    driver: bridge
+  jena-network:
+    driver: bridge

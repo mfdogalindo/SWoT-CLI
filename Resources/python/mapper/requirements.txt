@@ -1,0 +1,28 @@
+# Server
+fastapi==0.104.1
+
+# Data Validation and Settings
+pydantic==2.5.2
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# HTTP Client
+requests==2.31.0
+
+# MQTT Client
+paho-mqtt==1.6.1
+
+# RDF and Triple Store
+rdflib==7.0.0
+
+# Testing
+pytest==7.4.3
+
+# Type Checking
+mypy==1.7.0
+types-requests==2.31.0.10
+
+# Code Quality
+black==23.11.0
+flake8==6.1.0
+isort==5.12.0

@@ -27,12 +27,10 @@ setup(
     author="Your Name",
     author_email="your.email@example.com",
     description="A Smart City Sensor Simulator",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: MIT-NC License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

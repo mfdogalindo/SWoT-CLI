@@ -19,18 +19,21 @@ A Python-based simulator for generating and publishing smart city sensor data vi
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/smart-city-sensor.git
 cd smart-city-sensor
 ```
 
 2. Create and activate a virtual environment:
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
 ```
 
 3. Install dependencies:
+
 ```bash
 # For production
 pip install -e .
@@ -42,11 +45,13 @@ pip install -e ".[dev]"
 ## Configuration
 
 1. Copy the example environment file:
+
 ```bash
 cp .env.example .env
 ```
 
 2. Edit `.env` with your configuration:
+
 ```bash
 MQTT_BROKER=localhost
 MQTT_TOPIC=sensors/readings
@@ -57,6 +62,7 @@ LOG_LEVEL=INFO
 ## Usage
 
 Run the simulator:
+
 ```bash
 python -m sensors.main
 ```
