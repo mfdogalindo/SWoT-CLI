@@ -54,9 +54,26 @@ services:
     networks:
       - jena-network
       - mosquitto-network
+  reasoner:
+    build: ./reasoner
+    depends_on:
+      - jena
+      - mapper
+    environment:
+      - SWOT_URL_PREFIX=http://swot.local/
+      - TRIPLESTORE_URL=http://jena:3030
+      - TRIPLESTORE_DATASET=swot
+      - TRIPLESTORE_USERNAME=admin
+      - TRIPLESTORE_PASSWORD=Oe8AUz9xPHbdskvn
+      - LOG_LEVEL=DEBUG
+    networks:
+      - reasoner-network
+      - jena-network
 
 networks:
   mosquitto-network:
     driver: bridge
   jena-network:
+    driver: bridge
+  reasoner-network:
     driver: bridge

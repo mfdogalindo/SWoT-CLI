@@ -1,0 +1,11 @@
+# Server
+APScheduler==3.10.4
+
+# Configuration
+pydantic==2.9.2
+pydantic-settings==2.6.1
+python-dotenv==1.0.0
+
+# RDF and Triple Store
+rdflib==7.1.1
+requests==2.32.3
