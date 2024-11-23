@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Generic, TypeVar
 
 from pydantic import BaseModel
@@ -21,3 +22,10 @@ class Page(BaseModel, Generic[T]):
             total_elements=total_elements,
             total_pages=int((total_elements + size - 1) / size)
         )
+
+
+class SensorType(Enum):
+    TEMPERATURE = "temperature"
+    HUMIDITY = "humidity"
+    NOISE = "noise"
+    AIR_QUALITY = "air-quality"

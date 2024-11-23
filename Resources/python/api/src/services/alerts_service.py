@@ -6,7 +6,7 @@ from typing import Optional
 
 from config.settings import get_settings
 from models.api import Page
-from models.sensor import SensorReadingAlert, SensorType
+from models.sensor import SensorReadingAlert, SensorTyped
 from repositories.jena import get_repository
 from services.sparql_queries import SparqlQueries
 
@@ -26,13 +26,13 @@ class AlertsService:
         self.logger = logger or logging.getLogger(__name__)
         self.queries = SparqlQueries()
 
-    def get_alerts_by_type(self, sensor_type: SensorType, page: int = 0, size: int = 50) -> Page:
+    def get_alerts_by_type(self, sensor_type: SensorTyped, page: int = 0, size: int = 50) -> Page:
         """Get alerts for a specific sensor type with pagination."""
         try:
             # Get total count of alerts
             count_query = self.queries.COUNT_ALERTS_QUERY % (
                 self.app_url_prefix,
-                sensor_type.value
+                sensor_type.observation_name
             )
             logging.debug("Count query: %s", count_query)
             count_results = self.repository.query_result_set(count_query)
@@ -42,7 +42,7 @@ class AlertsService:
             # Get alerts for the requested page
             query = self.queries.READINGS_WITH_ALERTS_QUERY % (
                 self.app_url_prefix,
-                sensor_type.value,
+                sensor_type.observation_name,
                 page * size,
                 size
             )

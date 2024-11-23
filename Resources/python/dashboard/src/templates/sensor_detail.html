@@ -1,0 +1,216 @@
+{# templates/sensor_detail.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    {% if sensor %}
+    <div class="row">
+        <!-- Información básica del sensor -->
+                <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            {% set last_reading_time = sensor.last_reading|format_datetime_obj if sensor.last_reading else None %}
+                            <span class="status-indicator
+                                  {% if last_reading_time and (current_time - last_reading_time).total_seconds() < 3600 %}
+                                      status-active
+                                  {% else %}
+                                      status-inactive
+                                  {% endif %}"
+                                  title="{{ 'Active' if last_reading_time else 'Inactive' }}">
+                            </span>
+                            Sensor {{ sensor.id }}
+                        </h5>
+                        <span class="badge bg-light text-dark">
+                            {{ 'Online' if last_reading_time and (current_time - last_reading_time).total_seconds() < 3600 else 'Offline' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Detalles del sensor -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Sensor Details</h6>
+                            <dl class="row">
+                                <dt class="col-sm-4">Zone</dt>
+                                <dd class="col-sm-8">{{ sensor.zone or 'No Zone Assigned' }}</dd>
+
+                                <dt class="col-sm-4">Location</dt>
+                                <dd class="col-sm-8">
+                                    {% if sensor.latitude and sensor.longitude %}
+                                        {{ "%.6f"|format(sensor.latitude) }}, {{ "%.6f"|format(sensor.longitude) }}
+                                    {% else %}
+                                        No Location Data
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Last Reading</dt>
+                                <dd class="col-sm-8">
+                                    {% if sensor.last_reading %}
+                                        {{ sensor.last_reading|format_datetime }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <!-- Estadísticas -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Statistics</h6>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="border rounded p-3">
+                                        <div class="small text-muted">Total Observations</div>
+                                        <div class="h3 mb-0">{{ sensor.total_observations }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-3">
+                                        <div class="small text-muted">Total Alerts</div>
+                                        <div class="h3 mb-0">{{ sensor.total_alerts }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos y lecturas recientes -->
+        {% for sensor_type in sensor_types %}
+        <div class="col-md-6 mb-4">
+            {% set readings_key = sensor_type.endpoint + '_readings' %}
+            {% if readings_key in kwargs %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ sensor_type.display_name }} Readings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="{{ sensor_type.endpoint }}-chart"></canvas>
+                    </div>
+
+                    <!-- Tabla de lecturas recientes -->
+                    <div class="mt-4">
+                        <h6>Recent Readings</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Value</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reading in kwargs[readings_key].items %}
+                                    <tr>
+                                        <td>{{ reading.timestamp|format_datetime }}</td>
+                                        <td>{{ reading.value }} {{ reading.unit }}</td>
+                                        <td>
+                                            <span class="badge {% if reading.processed %}bg-success{% else %}bg-warning{% endif %}">
+                                                {{ 'Processed' if reading.processed else 'Pending' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        Sensor not found
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if sensor %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartColors = {
+        'temperature': {
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)'
+        },
+        'humidity': {
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)'
+        },
+        'noise': {
+            borderColor: 'rgba(255, 206, 86, 1)',
+            backgroundColor: 'rgba(255, 206, 86, 0.2)'
+        },
+        'air-quality': {
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)'
+        }
+    };
+
+    // Crear gráficos para cada tipo de sensor
+    {% for sensor_type in sensor_types %}
+        {% set readings_key = sensor_type.endpoint + '_readings' %}
+        {% if readings_key in kwargs %}
+        const {{ sensor_type.endpoint }}Data = {{ kwargs[readings_key].items|tojson }};
+        const {{ sensor_type.endpoint }}Ctx = document.getElementById('{{ sensor_type.endpoint }}-chart').getContext('2d');
+
+        new Chart({{ sensor_type.endpoint }}Ctx, {
+            type: 'line',
+            data: {
+                labels: {{ sensor_type.endpoint }}Data.map(reading =>
+                    new Date(reading.timestamp).toLocaleTimeString()
+                ),
+                datasets: [{
+                    label: '{{ sensor_type.display_name }}',
+                    data: {{ sensor_type.endpoint }}Data.map(reading => reading.value),
+                    borderColor: chartColors['{{ sensor_type.endpoint }}'].borderColor,
+                    backgroundColor: chartColors['{{ sensor_type.endpoint }}'].backgroundColor,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '{{ sensor_type.default_unit }}'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.parsed.y} {{ sensor_type.default_unit }}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    {% endfor %}
+});
+</script>
+{% endif %}
+{% endblock %}

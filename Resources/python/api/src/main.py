@@ -1,7 +1,12 @@
+import logging
+
+from fastapi import Path
+from typing import Annotated
+
 from fastapi import FastAPI, HTTPException, Query
 
-from models.api import Page
-from models.sensor import SensorDetail, SensorType
+from models.api import Page, SensorType
+from models.sensor import SensorDetail, SensorTyped
 from services.alerts_service import get_alerts_service
 from services.readings_service import get_readings_service
 from services.sensor_service import get_sensor_service
@@ -106,7 +111,7 @@ async def get_all_sensors(
 
 
 @app.get(
-    "/api/v1/environment/{sensor_type}/readings",
+    "/api/v1/environment/{sensor_type}",
     response_model=Page,
     tags=["Readings"],
     summary="Obtener lecturas por tipo de sensor"
@@ -120,12 +125,15 @@ async def get_sensor_readings(
     Obtiene las lecturas de un tipo específico de sensor.
 
     Parámetros:
-    - **sensor_type**: Tipo de sensor (TEMPERATURE, HUMIDITY, NOISE, AIR_QUALITY)
+    - **sensor_type**: Tipo de sensor (temperature, humidity, noise, air-quality)
     - **page**: Número de página (0 en adelante)
     - **size**: Cantidad de elementos por página (1-100)
     """
     try:
-        return readings_service.get_readings_by_type(sensor_type, page, size)
+        logging.info(f"Getting readings for sensor type: {sensor_type}")
+        stype = SensorTyped.from_sensor_type(sensor_type)
+        logging.info(f"Sensor type: {stype}")
+        return readings_service.get_readings_by_type(stype, page, size)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -145,12 +153,13 @@ async def get_sensor_alerts(
     Obtiene las alertas generadas para un tipo específico de sensor.
 
     Parámetros:
-    - **sensor_type**: Tipo de sensor (TEMPERATURE, HUMIDITY, NOISE, AIR_QUALITY)
+    - **sensor_type**: Tipo de sensor (temperature, humidity, noise, air-quality)
     - **page**: Número de página (0 en adelante)
     - **size**: Cantidad de elementos por página (1-100)
     """
     try:
-        return alerts_service.get_alerts_by_type(sensor_type, page, size)
+        stype = SensorTyped.from_sensor_type(sensor_type)
+        return alerts_service.get_alerts_by_type(stype, page, size)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

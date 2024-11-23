@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import Field, BaseModel
 
+from models.api import SensorType
+
 
 class SensorDetail(BaseModel):
     id: str = Field(..., description="Identificador único del sensor")
@@ -47,8 +49,20 @@ class SensorReadingAlert(BaseModel):
     message: str = Field(..., description="Mensaje descriptivo de la alerta")
 
 
-class SensorType(Enum):
-    TEMPERATURE = "Temperature"
-    HUMIDITY = "Humidity"
-    NOISE = "NoiseLevel"
-    AIR_QUALITY = "AirQuality"
+class SensorTyped(Enum):
+    TEMPERATURE = ("temperature", "Temperature", "°C")
+    HUMIDITY = ("humidity", "Humidity", "%")
+    NOISE = ("noise", "NoiseLevel", "dB")
+    AIR_QUALITY = ("air-quality", "AirQuality", "AQI")
+
+    def __init__(self, endpoint: str, observation_name: str, unit: str):
+        self.endpoint = endpoint
+        self.observation_name = observation_name
+        self.default_unit = unit
+
+    @classmethod
+    def from_sensor_type(cls, stype: SensorType) -> 'SensorTyped':
+        for sensor_type in cls:
+            if sensor_type.endpoint == stype.value:
+                return sensor_type
+        raise ValueError(f"Invalid sensor type endpoint: {stype}")
