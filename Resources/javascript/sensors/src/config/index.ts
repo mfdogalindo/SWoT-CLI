@@ -1,4 +1,3 @@
-// src/config/index.ts
 import dotenv from 'dotenv';
 import { ZoneType } from '../types';
 
