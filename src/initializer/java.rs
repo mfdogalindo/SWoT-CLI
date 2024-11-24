@@ -1,10 +1,18 @@
 use crate::config::ProjectConfig;
+use crate::initializer::demo_one_dockergen;
 use crate::utils;
+use std::collections::HashMap;
 use std::future::Future;
 use std::path::Path;
 use std::pin::Pin;
 use tokio::fs;
 
+// Estructura para definir la configuración de un servicio
+struct ServiceConfig {
+    spring_profiles: &'static str,
+    dependencies: Vec<&'static str>,
+    ext_config: Option<&'static str>,
+}
 pub(crate) async fn setup_project(config: &ProjectConfig) -> anyhow::Result<()> {
     let project_dir = utils::files::get_projects_dir().join(&config.name);
 
@@ -12,98 +20,121 @@ pub(crate) async fn setup_project(config: &ProjectConfig) -> anyhow::Result<()> 
         return Err(anyhow::anyhow!("Unsupported language: {}", config.language.name));
     }
 
-    if config.services.sensors {
+    // Definición de las configuraciones de servicios
+    let service_configs: HashMap<&str, ServiceConfig> = {
+        let mut m = HashMap::new();
+
+        m.insert("sensors", ServiceConfig {
+            spring_profiles: "",
+            dependencies: vec![
+                "org.springframework.integration:spring-integration-mqtt",
+                "org.springframework.boot:spring-boot-starter-json",
+            ],
+            ext_config: None,
+        });
+
+        m.insert("mapper", ServiceConfig {
+            spring_profiles: "",
+            dependencies: vec![
+                "org.springframework.integration:spring-integration-mqtt",
+                "org.apache.jena:jena-core:$JENA_VERSION",
+                "org.apache.jena:jena-arq:$JENA_VERSION",
+                "org.apache.jena:jena-rdfconnection:$JENA_VERSION",
+                "org.eclipse.rdf4j:rdf4j-runtime:4.2.2",
+            ],
+            ext_config: Some("JENA_VERSION=\"5.1.0\""),
+        });
+
+        m.insert("reasoner", ServiceConfig {
+            spring_profiles: "web",
+            dependencies: vec![
+                "org.apache.jena:jena-core:$JENA_VERSION",
+                "org.apache.jena:jena-arq:$JENA_VERSION",
+                "org.apache.jena:jena-rdfconnection:$JENA_VERSION",
+                "org.eclipse.rdf4j:rdf4j-runtime:4.2.2",
+            ],
+            ext_config: Some("JENA_VERSION=\"5.1.0\""),
+        });
+
+        m.insert("api", ServiceConfig {
+            spring_profiles: "web",
+            dependencies: vec![
+                "org.apache.jena:jena-core:$JENA_VERSION",
+                "org.apache.jena:jena-arq:$JENA_VERSION",
+                "org.apache.jena:jena-rdfconnection:$JENA_VERSION",
+                "org.eclipse.rdf4j:rdf4j-runtime:4.2.2",
+                "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0",
+            ],
+            ext_config: Some("JENA_VERSION=\"5.1.0\""),
+        });
+
+        m.insert("gateway", ServiceConfig {
+            spring_profiles: "cloud-gateway,web",
+            dependencies: vec![],
+            ext_config: None,
+        });
+
+        m.insert("dashboard", ServiceConfig {
+            spring_profiles: "thymeleaf,web",
+            dependencies: vec![],
+            ext_config: None,
+        });
+
+        m
+    };
+
+    // Función auxiliar para generar el string de dependencias
+    fn build_dependencies(service_config: &ServiceConfig) -> String {
         let mut dependencies = String::new();
-        dependencies.push_str("dependencies {\n");
-        // MQTT Support
-        dependencies.push_str("\timplementation 'org.springframework.integration:spring-integration-mqtt'\n");
-        // JSON Support
-        dependencies.push_str("\timplementation 'org.springframework.boot:spring-boot-starter-json'\n");
-        dependencies.push_str("}\n");
-        generate_springboot_project(&project_dir, &config, "sensors", "", &dependencies).await;
-        copy_dockerfiles(&project_dir, "sensors").await;
-        copy_demo_resources(&project_dir, &config, "sensors").await;
+
+        if let Some(ext) = service_config.ext_config {
+            dependencies.push_str(&format!("ext {{\n\t{}\n}}\n\n", ext));
+        }
+
+        if !service_config.dependencies.is_empty() {
+            dependencies.push_str("dependencies {\n");
+            for dep in &service_config.dependencies {
+                dependencies.push_str(&format!("\timplementation \"{}\"\n", dep));
+            }
+            dependencies.push_str("}\n");
+        }
+
+        dependencies
     }
 
-    if config.services.mapper {
-        let mut dependencies = String::new();
+    // Procesar cada servicio
+    for (service_name, service_enabled) in [
+        ("sensors", config.services.sensors),
+        ("mapper", config.services.mapper),
+        ("reasoner", config.services.reasoner),
+        ("api", config.services.api),
+        ("gateway", config.services.gateway),
+        ("dashboard", config.services.dashboard),
+    ] {
+        if service_enabled {
+            if let Some(service_config) = service_configs.get(service_name) {
+                let dependencies = build_dependencies(service_config);
 
-        dependencies.push_str("ext{\n\tJENA_VERSION=\"5.1.0\"\n}\n");
+                generate_springboot_project(
+                    &project_dir,
+                    config,
+                    service_name,
+                    service_config.spring_profiles,
+                    &dependencies,
+                ).await?;
 
-        dependencies.push_str("dependencies {\n");
-
-        // MQTT Support
-        dependencies.push_str("\timplementation 'org.springframework.integration:spring-integration-mqtt'\n");
-        // Apache Jena support
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-core:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-arq:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-rdfconnection:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'\n");
-
-        dependencies.push_str("}\n");
-
-        generate_springboot_project(&project_dir, &config, "mapper", "", &dependencies).await;
-        copy_dockerfiles(&project_dir, "mapper").await;
-        copy_demo_resources(&project_dir, &config, "mapper").await;
+                copy_dockerfiles(&project_dir, service_name).await?;
+                copy_demo_resources(&project_dir, config, service_name).await?;
+            }
+        }
     }
 
-    if config.services.reasoner {
-        let mut dependencies = String::new();
-
-        dependencies.push_str("ext{\n\tJENA_VERSION=\"5.1.0\"\n}\n");
-
-        dependencies.push_str("dependencies {\n");
-
-        // Apache Jena support
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-core:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-arq:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-rdfconnection:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'\n");
-
-        dependencies.push_str("}\n");
-
-        generate_springboot_project(&project_dir, &config, "reasoner", "web", &dependencies).await;
-        copy_dockerfiles(&project_dir, "reasoner").await;
-        copy_demo_resources(&project_dir, &config, "reasoner").await;
-    }
-
-    if config.services.api {
-        let mut dependencies = String::new();
-
-        dependencies.push_str("ext{\n\tJENA_VERSION=\"5.1.0\"\n}\n");
-
-        dependencies.push_str("dependencies {\n");
-
-        // Apache Jena support
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-core:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-arq:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation \"org.apache.jena:jena-rdfconnection:$JENA_VERSION\"\n");
-        dependencies.push_str("\timplementation 'org.eclipse.rdf4j:rdf4j-runtime:4.2.2'\n");
-
-        // Swagger UI
-        dependencies.push_str("\timplementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'\n");
-
-        dependencies.push_str("}\n");
-
-        generate_springboot_project(&project_dir, &config, "api", "web", &dependencies).await;
-        copy_dockerfiles(&project_dir, "api").await;
-        copy_demo_resources(&project_dir, &config, "api").await;
-    }
-
-    if config.services.gateway {
-        generate_springboot_project(&project_dir, &config, "gateway", "cloud-gateway,web", "").await;
-        copy_dockerfiles(&project_dir, "gateway").await;
-        copy_demo_resources(&project_dir, &config, "gateway").await;
-    }
-
-    if config.services.dashboard {
-        generate_springboot_project(&project_dir, &config, "dashboard", "thymeleaf,web", "").await;
-        copy_dockerfiles(&project_dir, "dashboard").await;
-        copy_demo_resources(&project_dir, &config, "dashboard").await;
-    }
+    // Generado archivo docker-compose.yml
+    demo_one_dockergen::generate_docker_compose(&project_dir, &config).await;
 
     Ok(())
 }
+
 
 async fn generate_springboot_project(project_dir: &Path, config: &ProjectConfig, service_name: &str, spring_starters: &str, dependencies: &str) -> anyhow::Result<()> {
     println!("{} - com.{}.{}", "Generating Spring Boot project", &config.name, service_name);
@@ -200,7 +231,8 @@ fn replace_place_holder<'a>(
             let path = entry.path();
             if path.is_dir() {
                 replace_place_holder(&path, place_holder, value).await?;
-            } else {
+            } else if path.extension().map_or(false, |ext| ext == "java") {
+                println!("\t\t\tReplacing {} with {} in {}", place_holder, value, path.display());
                 let content = fs::read_to_string(&path).await?;
                 let new_content = content.replace(place_holder, value);
                 fs::write(&path, new_content).await?;

@@ -1,9 +1,8 @@
 ﻿.DS_Store
-CLI/Projects
-Experiment/exp/fuseki-data
-CLI/target
+fuseki-data
 .idea
 .vscode
 target
 Projects
-Resources/python/jena
+jena
+.venv

@@ -1,5 +1,4 @@
 use crate::config::ProjectConfig;
-use crate::initializer::docker;
 use crate::initializer::java;
 use crate::initializer::python;
 use crate::initializer::typescript;
@@ -18,8 +17,13 @@ pub async fn create_project(
     lang_version: &str,
     tool_version: &str,
 ) -> Result<()> {
-    let project_dir = utils::files::get_projects_dir().join(project_name);
-    fs::create_dir_all(&project_dir).await?;
+
+    let root_dir = utils::files::get_directory("./");
+    let project_dir = root_dir.join("Projects").join(project_name);
+    match fs::create_dir_all(&project_dir).await {
+        Ok(_) => println!("Creating project directory: {}", project_dir.display()),
+        Err(e) => return Err(e.into()),
+    }
 
     let jena_password = utils::security::generate_random_string(16);
 
@@ -41,7 +45,7 @@ pub async fn create_project(
 
     match lang {
         "java" => java::setup_project(&config).await?,
-        "python" => python::setup_project(&project_dir, project_name).await?,
+        "python" => python::setup_project(&mut config).await?,
         "typescript" => typescript::setup_project(&project_dir, project_name).await?,
         _ => return Err(anyhow::anyhow!("Unsupported language: {}", lang)),
     }
@@ -57,9 +61,6 @@ pub async fn create_project(
         println!("Copying Mosquitto resources...");
         copy_mosquitto_resources(&project_dir).await?;
     }
-
-    // Generate docker-compose.yml
-    docker::generate_docker_compose(&project_dir, &config).await?;
 
     println!("Project created successfully at: {}", project_dir.display());
 
