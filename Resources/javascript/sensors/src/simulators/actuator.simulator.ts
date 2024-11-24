@@ -1,7 +1,7 @@
 import { ActuatorType, Location, ActuatorState } from '../types';
 import { mqttService } from '../services/mqtt.service';
 import { config } from '../config';
-import { logger } from '../services/logger.service';
+import { logger } from '../utils/logger.service';
 
 export class ActuatorSimulator {
   private readonly actuatorId: string;

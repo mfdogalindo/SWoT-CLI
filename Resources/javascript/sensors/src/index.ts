@@ -4,7 +4,7 @@ import { SensorSimulator } from './simulators/sensor.simulator';
 import { ActuatorSimulator } from './simulators/actuator.simulator';
 import { SensorType, ActuatorType, ZoneType } from './types';
 import { ActuatorController } from './controllers/actuator.controller';
-import { logger } from './services/logger.service';
+import { logger } from './utils/logger.service';
 
 // Crear sensores y actuadores para cada zona
 const sensors: SensorSimulator[] = [];

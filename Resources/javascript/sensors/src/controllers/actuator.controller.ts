@@ -2,7 +2,7 @@ import { ActuatorSimulator } from '../simulators/actuator.simulator';
 import { mqttService } from '../services/mqtt.service';
 import { ActuatorCommand, CommandType } from '../types';
 import { config } from '../config';
-import { logger } from '../services/logger.service';
+import { logger } from '../utils/logger.service';
 
 export class ActuatorController {
   private actuators: Map<string, ActuatorSimulator>;

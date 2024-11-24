@@ -1,0 +1,71 @@
+services:
+  mysql:
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/config:/docker-entrypoint-initdb.d
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword       # Contraseña del usuario root
+      MYSQL_DATABASE: nursing_home_db                    # Nombre de la base de datos
+      MYSQL_USER: myuser                      # Usuario adicional
+      MYSQL_PASSWORD: mypassword    
+    networks:
+      - mysql-network        # Contraseña del usuario adicional
+  jena:
+    image: stain/jena-fuseki
+    ports:
+      - "3030:3030"
+    volumes:
+      - ./jena/data:/fuseki
+    environment:
+      - ADMIN_PASSWORD=Oe8AUz9xPHbdskvn
+    networks:
+      - jena-network
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/data
+    command: redis-server --requirepass superpass --appendonly yes
+    networks:
+      - redis-network
+  mosquitto:
+    build:
+      context: ./mosquitto
+      dockerfile: Dockerfile
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    networks:
+      - mosquitto-network
+  sensors:
+    build: ./sensors
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - LOG_LEVEL=INFO
+    depends_on:
+      - mosquitto
+    networks:
+      - mosquitto-network
+
+networks:
+  mysql-network:
+    driver: bridge
+  redis-network:
+    driver: bridge
+  mosquitto-network:
+    driver: bridge
+  jena-network:
+    driver: bridge

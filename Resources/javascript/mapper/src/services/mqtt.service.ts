@@ -9,7 +9,6 @@ class MQTTService {
   public emitter = new EventEmitter();
 
   constructor() {
-    logger.info('Connecting to MQTT broker {} at port {}', config.mqtt.host, config.mqtt.port);
     this.client =
       config.mqtt.username && config.mqtt.password
         ? mqtt.connect(`mqtt://${config.mqtt.host}:${config.mqtt.port}`, {

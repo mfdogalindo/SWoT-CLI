@@ -1,4 +1,3 @@
-// src/config/index.ts
 import dotenv from 'dotenv';
 import { ZoneType } from '../types';
 
@@ -43,6 +42,6 @@ export const config = {
     ],
   },
   logging: {
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL?.toLowerCase() || 'info',
   },
 };
