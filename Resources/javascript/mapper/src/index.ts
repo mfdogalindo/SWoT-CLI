@@ -1,5 +1,6 @@
 // src/index.ts
 import { dataService } from './database/data.service';
+import { eventManager } from './services/eventManager.service';
 import { logger } from './utils/logger.service';
 
 async function initialize() {
@@ -9,17 +10,8 @@ async function initialize() {
     // Cargar datos iniciales
     await dataService.initialize();
 
-    let persons = await dataService.getPersons();
-    let sensors = await dataService.getSensors();
-    let zones = await dataService.getZones();
-    let actuators = await dataService.getActuators();
-    let lightingSchedules = await dataService.getLightingSchedules(); 
-
-    logger.info('Persons: {}', persons);
-    logger.info('Sensors: {}', sensors);
-    logger.info('Zones: {}', zones);
-    logger.info('Actuators: {}', actuators);
-    logger.info('Lighting Schedules: {}', lightingSchedules);
+    // Iniciar servicios
+    eventManager.initialize();
 
     logger.info('Mapper application initialized successfully');
   } catch (error) {

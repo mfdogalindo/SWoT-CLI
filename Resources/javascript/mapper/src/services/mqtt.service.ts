@@ -33,15 +33,6 @@ class MQTTService {
         }
       });
 
-      // Suscribirse al topic de solicitud de estado
-      this.client.subscribe(config.topics.actuators.stateRequest, err => {
-        if (!err) {
-          logger.info(
-            'Subscribed to state request topic:' +
-              config.topics.actuators.stateRequest,
-          );
-        }
-      });
     });
 
     this.client.on('message', (topic, message) => {
@@ -50,6 +41,14 @@ class MQTTService {
 
     this.client.on('error', error => {
       logger.error('MQTT Error:', error);
+    });
+  }
+
+  public subscribe(topic: string): void {
+    this.client.subscribe(topic, err => {
+      if (!err) {
+        logger.info('Subscribed to topic: {}', topic);
+      }
     });
   }
 

@@ -1,6 +1,7 @@
 import mysql, { Pool } from 'mysql2/promise';
 import { config } from '../config'; 
 import { Zone, Person, Sensor, Actuator, LightingSchedule } from '../types/database.types';
+import { DatabaseMapper } from './database.mapper';
 
 export class MySQLService {
   private pool: Pool;
@@ -16,27 +17,27 @@ export class MySQLService {
 
   async getZones(): Promise<Zone[]> {
     const [rows] = await this.pool.query('SELECT * FROM zones');
-    return rows as Zone[];
+    return DatabaseMapper.mapRows(rows as any[]) as Zone[];
   }
 
   async getPersons(): Promise<Person[]> {
     const [rows] = await this.pool.query('SELECT * FROM persons WHERE active = true');
-    return rows as Person[];
+    return DatabaseMapper.mapRows(rows as any[]) as Person[];
   }
 
   async getSensors(): Promise<Sensor[]> {
     const [rows] = await this.pool.query('SELECT * FROM sensors WHERE active = true');
-    return rows as Sensor[];
+    return DatabaseMapper.mapRows(rows as any[]) as Sensor[];
   }
 
   async getActuators(): Promise<Actuator[]> {
     const [rows] = await this.pool.query('SELECT * FROM actuators WHERE active = true');
-    return rows as Actuator[];
+    return DatabaseMapper.mapRows(rows as any[]) as Actuator[];
   }
 
   async getLightingSchedules(): Promise<LightingSchedule[]> {
     const [rows] = await this.pool.query('SELECT * FROM lighting_schedules');
-    return rows as LightingSchedule[];
+    return DatabaseMapper.mapRows(rows as any[]) as LightingSchedule[];
   }
 }
 
