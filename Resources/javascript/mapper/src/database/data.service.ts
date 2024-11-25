@@ -1,12 +1,12 @@
 import { MySQLService } from './mysql.service';
 import { RedisService } from './redis.service';
-import { Zone, Person, Sensor, Actuator } from '../types/database.types';
+import { Zone, Person, Sensor, Actuator, LightingSchedule } from '../types/database.types';
 import { logger } from '../utils/logger.service';
+import { config } from '../config';
 
 export class DataService {
   private mysqlService: MySQLService;
   private redisService: RedisService;
-  private actuatorsCache: Actuator[] = [];
   private actuatorUpdateInterval: NodeJS.Timeout | undefined;
 
   constructor() {
@@ -17,17 +17,23 @@ export class DataService {
 
   private startActuatorUpdateInterval(): void {
     this.actuatorUpdateInterval = setInterval(
-      () => this.updateActuatorsCache(),
-      10 * 60 * 1000 // 10 minutes
+      () => this.updateCache(),
+      1000 * config.redisConfig.cacheTimeout
     );
   }
 
-  async updateActuatorsCache(): Promise<void> {
+  async updateCache(): Promise<void> {
     try {
-      this.actuatorsCache = await this.mysqlService.getActuators();
-      logger.info('Actuators cache updated');
+      await Promise.all([
+        this.getZones(),
+        this.getPersons(),
+        this.getSensors(),
+        this.getActuators(),
+        this.getLightingSchedules()
+      ]);
+      logger.info('DB cache updated');
     } catch (error) {
-      logger.error('Error updating actuators cache:', error);
+      logger.error('Error updating cache:', error);
     }
   }
 
@@ -62,17 +68,18 @@ export class DataService {
     return this.getDataWithCache('sensors', () => this.mysqlService.getSensors());
   }
 
-  getActuators(): Actuator[] {
-    return this.actuatorsCache;
+  getActuators(): Promise<Actuator[]> {
+    return this.getDataWithCache('actuators', () => this.mysqlService.getActuators());
+  }
+
+  async getLightingSchedules(): Promise<LightingSchedule[]> {
+    return this.getDataWithCache('lighting_schedules',
+      () => this.mysqlService.getLightingSchedules()
+    );
   }
 
   async initialize(): Promise<void> {
-    await this.updateActuatorsCache();
-    await Promise.all([
-      this.getZones(),
-      this.getPersons(),
-      this.getSensors()
-    ]);
+    return this.updateCache();
   }
 
   cleanup(): void {

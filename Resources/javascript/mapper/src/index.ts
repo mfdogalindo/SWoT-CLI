@@ -12,11 +12,14 @@ async function initialize() {
     let persons = await dataService.getPersons();
     let sensors = await dataService.getSensors();
     let zones = await dataService.getZones();
+    let actuators = await dataService.getActuators();
+    let lightingSchedules = await dataService.getLightingSchedules(); 
 
     logger.info('Persons: {}', persons);
     logger.info('Sensors: {}', sensors);
     logger.info('Zones: {}', zones);
-    
+    logger.info('Actuators: {}', actuators);
+    logger.info('Lighting Schedules: {}', lightingSchedules);
 
     logger.info('Mapper application initialized successfully');
   } catch (error) {

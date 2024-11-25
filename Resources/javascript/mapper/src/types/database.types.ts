@@ -32,3 +32,9 @@ export interface Zone {
    active: boolean;
  }
  
+ export interface LightingSchedule {
+  id: string;
+  zoneId: string;
+  startTime: string; // Format: HH:mm:ss
+  endTime: string;   // Format: HH:mm:ss
+}

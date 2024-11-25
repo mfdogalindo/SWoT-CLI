@@ -1,6 +1,6 @@
 import mysql, { Pool } from 'mysql2/promise';
 import { config } from '../config'; 
-import { Zone, Person, Sensor, Actuator } from '../types/database.types';
+import { Zone, Person, Sensor, Actuator, LightingSchedule } from '../types/database.types';
 
 export class MySQLService {
   private pool: Pool;
@@ -32,6 +32,11 @@ export class MySQLService {
   async getActuators(): Promise<Actuator[]> {
     const [rows] = await this.pool.query('SELECT * FROM actuators WHERE active = true');
     return rows as Actuator[];
+  }
+
+  async getLightingSchedules(): Promise<LightingSchedule[]> {
+    const [rows] = await this.pool.query('SELECT * FROM lighting_schedules');
+    return rows as LightingSchedule[];
   }
 }
 
