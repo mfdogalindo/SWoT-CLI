@@ -59,6 +59,36 @@ services:
       - mosquitto
     networks:
       - mosquitto-network
+  mapper:
+    build: ./mapper
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=myuser
+      - MYSQL_PASSWORD=mypassword
+      - MYSQL_DATABASE=nursing_home_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=superpass
+      - JENA_HOST=http://jena:3030
+      - JENA_DATASET=nursing_home
+      - JENA_USER=admin
+      - JENA_PASSWORD=Oe8AUz9xPHbdskvn
+      - SENSORS_TOPIC=nursing-home/sensors
+      - ACTUATOR_STATE_TOPIC=nursing-home/actuators/state
+      - ACTUATOR_STATE_REQUEST_TOPIC=nursing-home/actuators/state/request
+      - SEMANTIC_SENSOR_TOPIC=nursing-home/semantic/sensors
+      - SEMANTIC_ACTUATOR_TOPIC=nursing-home/semantic/actuators
+      - LOG_LEVEL=INFO
+    depends_on:
+      - jena
+    networks:
+      - jena-network
+      - mysql-network
+      - redis-network
+      - mosquitto-network
 
 networks:
   mysql-network:

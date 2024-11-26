@@ -1,5 +1,5 @@
 
-export class QueriesTool {
+export class SemanticMappingTools {
    static sanitizeId(id: string): string {
       return id.replace(/[^a-zA-Z0-9]/g, '_');
    }

@@ -23,16 +23,6 @@ class MQTTService {
   private init(): void {
     this.client.on('connect', () => {
       logger.info('Connected to MQTT broker');
-      // Suscribirse al topic de comandos
-      this.client.subscribe(config.topics.actuators.command, err => {
-        if (!err) {
-          logger.info(
-            'Subscribed to actuator commands: ' +
-              config.topics.actuators.command,
-          );
-        }
-      });
-
     });
 
     this.client.on('message', (topic, message) => {

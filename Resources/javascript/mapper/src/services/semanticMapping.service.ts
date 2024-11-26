@@ -1,8 +1,7 @@
 import { BaseRepository } from "../repositories/base.repository";
 import { ActuatorData, SensorData } from "../types/devices.types";
-import { QueriesTool } from "../utils/queries.tool";
+import { SemanticMappingTools } from "../utils/mapping.tool";
 import { logger } from "../utils/logger.service";
-import { log } from "console";
 
 export class SemanticMapping {
   private readonly baseURI: string = 'http://example.org/nursing-home#';
@@ -26,31 +25,31 @@ export class SemanticMapping {
       const zone = await BaseRepository.findZone(sensorData.location.zoneId);
 
       return `${this.prefixes}
-        nh:observation_${QueriesTool.sanitizeId(sensorData.sensorId)}_${sensorData.timestamp}
+        nh:observation_${SemanticMappingTools.sanitizeId(sensorData.sensorId)}_${sensorData.timestamp}
           rdf:type sosa:Observation ;
-          sosa:madeBySensor nh:sensor_${QueriesTool.sanitizeId(sensorData.sensorId)} ;
-          sosa:hasFeatureOfInterest nh:zone_${QueriesTool.sanitizeId(zone.id)} ;
+          sosa:madeBySensor nh:sensor_${SemanticMappingTools.sanitizeId(sensorData.sensorId)} ;
+          sosa:hasFeatureOfInterest nh:zone_${SemanticMappingTools.sanitizeId(zone.id)} ;
           sosa:observedProperty nh:${sensorData.type.toLowerCase()} ;
-          sosa:resultTime "${QueriesTool.createTimestamp(sensorData.timestamp)}"^^xsd:dateTime ;
+          sosa:resultTime "${SemanticMappingTools.createTimestamp(sensorData.timestamp)}"^^xsd:dateTime ;
           sosa:hasResult [
             rdf:type nh:${sensorData.type}Result ;
             nh:value "${sensorData.value}"^^xsd:string
           ] .
 
-        nh:sensor_${QueriesTool.sanitizeId(sensorData.sensorId)}
+        nh:sensor_${SemanticMappingTools.sanitizeId(sensorData.sensorId)}
           rdf:type sosa:Sensor ;
           rdfs:label "${sensor.description || 'Sensor ' + sensor.id}"@en ;
           sosa:observes nh:${sensorData.type.toLowerCase()} ;
-          nh:monitors nh:person_${QueriesTool.sanitizeId(person.id)} .
+          nh:monitors nh:person_${SemanticMappingTools.sanitizeId(person.id)} .
 
-        nh:person_${QueriesTool.sanitizeId(person.id)}
+        nh:person_${SemanticMappingTools.sanitizeId(person.id)}
           rdf:type foaf:Person ;
           foaf:name "${person.name}" ;
           nh:type "${person.type}" ;
           ${person.preferredTemp ? `nh:preferredTemperature "${person.preferredTemp}"^^xsd:decimal ;` : ''}
-          nh:isLocatedIn nh:zone_${QueriesTool.sanitizeId(sensorData.location.zoneId)} .
+          nh:isLocatedIn nh:zone_${SemanticMappingTools.sanitizeId(sensorData.location.zoneId)} .
 
-        nh:zone_${QueriesTool.sanitizeId(zone.id)}
+        nh:zone_${SemanticMappingTools.sanitizeId(zone.id)}
           rdf:type nh:Zone ;
           rdfs:label "${zone.name}"@en ;
           nh:zoneType "${zone.type}" .
@@ -67,23 +66,23 @@ export class SemanticMapping {
       const zone = await BaseRepository.findZone(actuatorData.location.zoneId);
 
       return `${this.prefixes}
-        nh:actuatorState_${QueriesTool.sanitizeId(actuatorData.actuatorId)}_${actuatorData.timestamp}
+        nh:actuatorState_${SemanticMappingTools.sanitizeId(actuatorData.actuatorId)}_${actuatorData.timestamp}
           rdf:type sosa:Actuation ;
-          sosa:madeByActuator nh:actuator_${QueriesTool.sanitizeId(actuatorData.actuatorId)} ;
-          sosa:hasFeatureOfInterest nh:zone_${QueriesTool.sanitizeId(zone.id)} ;
-          sosa:resultTime "${QueriesTool.createTimestamp(actuatorData.timestamp)}"^^xsd:dateTime ;
+          sosa:madeByActuator nh:actuator_${SemanticMappingTools.sanitizeId(actuatorData.actuatorId)} ;
+          sosa:hasFeatureOfInterest nh:zone_${SemanticMappingTools.sanitizeId(zone.id)} ;
+          sosa:resultTime "${SemanticMappingTools.createTimestamp(actuatorData.timestamp)}"^^xsd:dateTime ;
           sosa:hasResult [
             rdf:type nh:${actuatorData.type}State ;
             nh:value "${actuatorData.value}"^^${this.getValueDatatype(actuatorData.type, actuatorData.value)}
           ] .
 
-        nh:actuator_${QueriesTool.sanitizeId(actuatorData.actuatorId)}
+        nh:actuator_${SemanticMappingTools.sanitizeId(actuatorData.actuatorId)}
           rdf:type sosa:Actuator ;
           rdfs:label "${actuator.description || 'Actuator ' + actuator.id}"@en ;
           nh:type "${actuator.type}" ;
-          nh:controls nh:zone_${QueriesTool.sanitizeId(zone.id)} .
+          nh:controls nh:zone_${SemanticMappingTools.sanitizeId(zone.id)} .
 
-        nh:zone_${QueriesTool.sanitizeId(zone.id)}
+        nh:zone_${SemanticMappingTools.sanitizeId(zone.id)}
           rdf:type nh:Zone ;
           rdfs:label "${zone.name}"@en ;
           nh:zoneType "${zone.type}" .
@@ -100,12 +99,12 @@ export class SemanticMapping {
       const person = await BaseRepository.findPerson(sensor.personId);
 
       return `${this.prefixes}
-        nh:fallAlert_${QueriesTool.sanitizeId(sensorData.sensorId)}_${sensorData.timestamp}
+        nh:fallAlert_${SemanticMappingTools.sanitizeId(sensorData.sensorId)}_${sensorData.timestamp}
           rdf:type nh:FallAlert ;
-          sosa:madeBySensor nh:sensor_${QueriesTool.sanitizeId(sensorData.sensorId)} ;
-          nh:alertTime "${QueriesTool.createTimestamp(sensorData.timestamp)}"^^xsd:dateTime ;
-          nh:concernsPerson nh:person_${QueriesTool.sanitizeId(person.id)} ;
-          nh:location nh:zone_${QueriesTool.sanitizeId(sensorData.location.zoneId)} .
+          sosa:madeBySensor nh:sensor_${SemanticMappingTools.sanitizeId(sensorData.sensorId)} ;
+          nh:alertTime "${SemanticMappingTools.createTimestamp(sensorData.timestamp)}"^^xsd:dateTime ;
+          nh:concernsPerson nh:person_${SemanticMappingTools.sanitizeId(person.id)} ;
+          nh:location nh:zone_${SemanticMappingTools.sanitizeId(sensorData.location.zoneId)} .
       `;
     } catch (error) {
       logger.error('Error mapping fall alert:', error);

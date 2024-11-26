@@ -1,6 +1,7 @@
 // src/index.ts
 import { dataService } from './database/data.service';
 import { eventManager } from './services/eventManager.service';
+import { jenaService } from './services/jena.service';
 import { logger } from './utils/logger.service';
 
 async function initialize() {
@@ -9,6 +10,7 @@ async function initialize() {
 
     // Cargar datos iniciales
     await dataService.initialize();
+    await jenaService.initialize();
 
     // Iniciar servicios
     eventManager.initialize();

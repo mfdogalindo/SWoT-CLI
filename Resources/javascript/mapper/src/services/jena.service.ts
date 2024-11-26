@@ -1,116 +1,150 @@
 // src/services/jena.service.ts
 
-/*
-
-import axios from 'axios';
-import { config } from '../config';
-import { logger } from '../utils/logger.service';
+import axios, { AxiosError } from "axios";
+import { logger } from "../utils/logger.service";
+import { config } from "../config";
+import { on } from "events";
 
 export class JenaService {
-  private static instance: JenaService;
-  private baseUrl: string;
-  private auth: {
-    username: string;
-    password: string;
-  };
 
-  private constructor() {
-    this.baseUrl = `${config.jena.host}/${config.jena.dataset}`;
-    this.auth = {
-      username: config.jena.username,
-      password: config.jena.password
-    };
-  }
-
-  public static getInstance(): JenaService {
-    if (!JenaService.instance) {
-      JenaService.instance = new JenaService();
-    }
-    return JenaService.instance;
-  }
-
-  public async insertData(turtle: string): Promise<void> {
+  async initialize(): Promise<void> {
     try {
-      await axios.post(
-        `${this.baseUrl}${config.jena.endpoints.data}`,
-        turtle,
-        {
-          headers: {
-            'Content-Type': 'text/turtle',
-          },
-          auth: this.auth,
-        }
-      );
+      await this.createDataset(`${config.jena.dataset}`, true);
+      await this.createDataset(`${config.jena.dataset}`);
+      logger.info('Jena service initialized');
     } catch (error) {
-      logger.error('Error inserting data into Jena:', error);
+      logger.error('Error initializing Jena service:', error);
       throw error;
     }
   }
 
-  public async executeSparqlUpdate(query: string): Promise<void> {
+  async query(datasetName: string, sparqlQuery: string, onMemory: boolean = false): Promise<any> {
+    datasetName = onMemory ? `${datasetName}-memory` : datasetName;
+    try {
+      const response = await axios.post(
+        `${config.jena.host}/${datasetName}/query`,
+        sparqlQuery,
+        {
+          headers: {
+            'Content-Type': 'application/sparql-query',
+            Accept: 'application/json',
+            ...this.getAuthHeader(),
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      logger.error(`Error executing SPARQL query:`, error);
+      throw error;
+    }
+  }
+
+  async update(datasetName: string, sparqlUpdate: string, onMemory: boolean = false): Promise<void> {
+    datasetName = onMemory ? `${datasetName}-memory` : datasetName;
     try {
       await axios.post(
-        `${this.baseUrl}${config.jena.endpoints.update}`,
-        query,
+        `${config.jena.host}/${datasetName}/update`,
+        sparqlUpdate,
         {
           headers: {
             'Content-Type': 'application/sparql-update',
+            ...this.getAuthHeader(),
           },
-          auth: this.auth,
         }
       );
     } catch (error) {
-      logger.error('Error executing SPARQL update:', error);
+      logger.error(`Error executing SPARQL update:`, error);
       throw error;
     }
   }
 
-  public async querySparql<T>(query: string): Promise<T[]> {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}${config.jena.endpoints.query}`,
+  async addData(datasetName: string, turtleData: string, onMemory : boolean = false): Promise<any> {
+    datasetName = onMemory ? `${datasetName}-memory` : datasetName;
+    return axios.post(
+        `${config.jena.host}/${datasetName}/data`,
+        turtleData,
         {
-          params: {
-            query,
-            format: 'json',
+          headers: {
+            'Content-Type': 'text/turtle',
+            ...this.getAuthHeader(),
           },
-          auth: this.auth,
         }
-      );
-      return this.processResults<T>(response.data);
-    } catch (error) {
-      logger.error('Error executing SPARQL query:', error);
+      ).catch((err) => {
+        logger.error('Error adding turtle data: {}', err?.message ?? err);
+        throw err.message;
+      }
+      ).then((response) => {
+        return response.data;
+      });
+    
+  }
+
+  private getAuthHeader(): any {
+    return {
+      ...(config.jena.username && {
+        Authorization: `Basic ${Buffer.from(
+          `${config.jena.username}:${config.jena.password}`
+        ).toString('base64')}`,
+      }),
+    };
+  }
+
+  async createDataset(datasetName: string, onMemory: boolean = false): Promise<boolean> {
+    try {
+      datasetName = onMemory ? `${datasetName}-memory` : datasetName;
+      const exists = await this.datasetExists(datasetName);
+      if (exists) {
+        logger.info(`Dataset {} already exists`, datasetName);
+        return true;
+      }
+
+      const response = await axios.post(
+        `${config.jena.host}/$/datasets`,
+        {
+          dbType: onMemory ? 'mem' : 'tdb2',
+          dbName: datasetName,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            ...this.getAuthHeader()
+          }
+        }
+      ).catch((err) => {
+        logger.error('Error creating dataset: {}', err?.message ?? err);
+        throw err.message;
+      });
+
+      if (response.status === 201 || response.status === 200) {
+        logger.info(`Dataset {} created`, datasetName);
+        return true;
+      }
+
+      return false;
+    }
+    catch (error) {
       throw error;
     }
   }
 
-  public async deleteOldData(hours: number): Promise<void> {
-    const query = `
-      DELETE {
-        ?s ?p ?o
+  private async datasetExists(datasetName: string): Promise<boolean> {
+    return axios.get(
+        `${config.jena.host}/$/datasets/${datasetName}`,
+        {
+          headers: this.getAuthHeader(),
+          validateStatus: (status) => status === 200 || status === 404,
+        }
+      ).then((response) => {
+        return response.status === 200;
       }
-      WHERE {
-        ?s ?p ?o ;
-           sosa:resultTime ?time .
-        FILTER (?time < "${new Date(Date.now() - hours * 3600000).toISOString()}"^^xsd:dateTime)
-      }
-    `;
-
-    await this.executeSparqlUpdate(query);
-  }
-
-  private processResults<T>(response: any): T[] {
-    const bindings = response.results.bindings;
-    return bindings.map((binding: any) => {
-      const result: any = {};
-      Object.keys(binding).forEach(key => {
-        result[key] = binding[key].value;
+      ).catch((err) => {
+        logger.error('Error checking dataset: {}', err?.message ?? err);
+        throw err.message;
       });
-      return result as T;
-    });
-  }
+    }
 }
 
-export const jenaService = JenaService.getInstance();
 
-*/
+// Singleton instance of JenaService
+export const jenaService = new JenaService();

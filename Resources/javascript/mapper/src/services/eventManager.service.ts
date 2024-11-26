@@ -3,6 +3,7 @@ import { config } from "../config";
 import { logger } from "../utils/logger.service";
 import { SensorsParser } from "../mappers/sensors.parser";
 import { semanticMapping } from "./semanticMapping.service";
+import { jenaService } from "./jena.service";
 
 export class EventManager {
 
@@ -10,7 +11,6 @@ export class EventManager {
       // Subscribe to all topics
       mqttService.subscribe(config.topics.sensors);
       mqttService.subscribe(config.topics.actuators.state);
-      mqttService.subscribe(config.topics.actuators.command);
 
       this.listen();
       logger.info('Event manager initialized');
@@ -26,9 +26,6 @@ export class EventManager {
             case config.topics.actuators.state:
                this.handleActuatorStateMessage(message);
                break;
-            case config.topics.actuators.command:
-               this.handleActuatorCommandMessage(message);
-               break;
             default:
                logger.warn('Unknown topic: {}', topic);
                break;
@@ -38,7 +35,6 @@ export class EventManager {
    }
 
    async handleSensorMessage(message: Buffer): Promise<void> {
-      // logger.debug('Sensor message received: {}', message.toString());
       const sensorData = SensorsParser.parseSensorData(message);
 
       if (!sensorData) {
@@ -47,7 +43,9 @@ export class EventManager {
       }
 
       const mappedSensorData = await semanticMapping.mapSensorData(sensorData);
+
       mqttService.publish(config.topics.semantic.sensors, mappedSensorData);
+      jenaService.addData(config.jena.dataset, mappedSensorData, true);
    }
 
    async handleActuatorStateMessage(message: Buffer): Promise<void> {
@@ -58,19 +56,9 @@ export class EventManager {
          return;
       }
       
-      const mappedActuatorData = semanticMapping.mapActuatorData(actuatorData);
-      mqttService.publish(config.topics.semantic.actuators.state, mappedActuatorData);
-   }
-
-   async handleActuatorCommandMessage(message: Buffer): Promise<void> {
-      const actuatorCommand = await SensorsParser.parseActuatorCommand(message);
-
-      if (!actuatorCommand) {
-         logger.warn('Invalid actuator command: {}', message.toString());
-         return;
-      }
-
-      // logger.debug('Actuator command message received: {}', message.toString());
+      const mappedActuatorData = await semanticMapping.mapActuatorData(actuatorData);
+      mqttService.publish(config.topics.semantic.actuators, mappedActuatorData);
+      jenaService.addData(config.jena.dataset, mappedActuatorData, true);
    }
 
    
