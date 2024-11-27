@@ -1,7 +1,6 @@
 // src/lib/websocket.ts
 import { create } from 'zustand';
 import { SensorData, ActuatorData } from '@/types';
-import { v4 as uuidv4 } from 'uuid'
 
 interface WebSocketStore {
   sensors: Map<string, SensorData>;

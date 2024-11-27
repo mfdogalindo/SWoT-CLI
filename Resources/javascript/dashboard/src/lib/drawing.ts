@@ -24,7 +24,7 @@ const LAYOUT = {
    width: 1000,
    height: 600,
    roomSize: 200,
-   bathroomSize: 60,
+   bathroomSize: 120,
    commonAreaSize: 300,
    wallThickness: 4
 };
@@ -44,7 +44,7 @@ export function drawFloorPlan(ctx: CanvasRenderingContext2D) {
 
    // Rooms and bathrooms (5 sets)
    for (let i = 0; i < 5; i++) {
-      const x = 20 + (LAYOUT.roomSize + LAYOUT.bathroomSize) * i;
+      const x = 20 + (LAYOUT.roomSize + LAYOUT.bathroomSize/2) * i;
       const y = 20;
 
       // Room
@@ -59,7 +59,7 @@ export function drawFloorPlan(ctx: CanvasRenderingContext2D) {
       // Bathroom
       ctx.fillStyle = COLORS.bathroom;
       ctx.beginPath();
-      ctx.rect(x + LAYOUT.roomSize, y, LAYOUT.bathroomSize, LAYOUT.bathroomSize);
+      ctx.rect(x + LAYOUT.roomSize, y, LAYOUT.bathroomSize/2, LAYOUT.bathroomSize);
       ctx.fill();
       ctx.stroke();
 
@@ -122,16 +122,13 @@ export function drawPeople(ctx: CanvasRenderingContext2D, sensors: SensorData[])
    // Dibujar personas por zona
    peopleByZone.forEach((zonePersons, zoneId) => {
       const basePosition = getPositionForZone(zoneId);
-      const totalInZone = zonePersons.length;
 
       zonePersons.forEach((sensor, index) => {
          if (!sensor.person) return;
 
          const position = calculatePersonPosition(
             basePosition,
-            index,
-            totalInZone,
-            getZoneSize(zoneId).height
+            index
          );
 
          const color = COLORS.person[sensor.person.type];
@@ -188,29 +185,12 @@ export function drawActuators(ctx: CanvasRenderingContext2D, actuators: Actuator
    ctx.restore();
 }
 
-// Función auxiliar para obtener el tamaño de una zona
-function getZoneSize(zoneId: string): { width: number; height: number } {
-   if (zoneId.startsWith('room')) {
-      return { width: LAYOUT.roomSize, height: LAYOUT.roomSize };
-   }
-   if (zoneId.startsWith('bathroom')) {
-      return { width: LAYOUT.bathroomSize, height: LAYOUT.bathroomSize };
-   }
-   if (['living-room', 'dining-room', 'yard'].includes(zoneId)) {
-      return { width: LAYOUT.commonAreaSize, height: LAYOUT.commonAreaSize };
-   }
-   return { width: 0, height: 0 };
-}
 
 // Funcion auxiliar para calcular la posición de la persona
 function calculatePersonPosition(
    basePosition: Point,
    index: number,
-   totalInZone: number,
-   roomSize: number
 ): Point {
-   // Calcular la altura total que ocuparán todas las personas
-   const totalHeight = totalInZone * PERSON_SPACING;
 
    // Calcular la posición Y inicial para centrar el grupo verticalmente en la habitación
    const startY = basePosition.y + 30
@@ -226,15 +206,15 @@ function getPositionForZone(zoneId: string): Point {
    // Posiciones base para cada zona (esquina superior izquierda)
    const positions: { [key: string]: Point } = {
       'room1': { x: 20, y: 60 },
-      'room2': { x: 20 + (LAYOUT.roomSize + LAYOUT.bathroomSize), y: 60 },
-      'room3': { x: 20 + 2 * (LAYOUT.roomSize + LAYOUT.bathroomSize), y: 60 },
-      'room4': { x: 20 + 3 * (LAYOUT.roomSize + LAYOUT.bathroomSize), y: 60 },
-      'room5': { x: 20 + 4 * (LAYOUT.roomSize + LAYOUT.bathroomSize), y: 60 },
+      'room2': { x: 20 + (LAYOUT.roomSize + LAYOUT.bathroomSize/2), y: 60 },
+      'room3': { x: 20 + 2 * (LAYOUT.roomSize + LAYOUT.bathroomSize/2), y: 60 },
+      'room4': { x: 20 + 3 * (LAYOUT.roomSize + LAYOUT.bathroomSize/2), y: 60 },
+      'room5': { x: 20 + 4 * (LAYOUT.roomSize + LAYOUT.bathroomSize/2), y: 60 },
       'bathroom1': { x: 10 + LAYOUT.roomSize, y: 60 },
-      'bathroom2': { x: 10 + 2 * LAYOUT.roomSize + LAYOUT.bathroomSize, y: 60 },
-      'bathroom3': { x: 10 + 3 * LAYOUT.roomSize + 2 * LAYOUT.bathroomSize, y: 60 },
-      'bathroom4': { x: 10 + 4 * LAYOUT.roomSize + 3 * LAYOUT.bathroomSize, y: 60 },
-      'bathroom5': { x: 10 + 5 * LAYOUT.roomSize + 4 * LAYOUT.bathroomSize, y: 60 },
+      'bathroom2': { x: 10 + 2 * LAYOUT.roomSize + LAYOUT.bathroomSize/2, y: 60 },
+      'bathroom3': { x: 10 + 3 * LAYOUT.roomSize + 2 * LAYOUT.bathroomSize/2, y: 60 },
+      'bathroom4': { x: 10 + 4 * LAYOUT.roomSize + 3 * LAYOUT.bathroomSize/2, y: 60 },
+      'bathroom5': { x: 10 + 5 * LAYOUT.roomSize + 4 * LAYOUT.bathroomSize/2, y: 60 },
       'living_room': { x: 20, y: LAYOUT.roomSize + 100 },
       'dining_room': { x: LAYOUT.commonAreaSize + 40, y: LAYOUT.roomSize + 100 },
       'yard': { x: LAYOUT.commonAreaSize * 2 + 60, y: LAYOUT.roomSize + 100 }

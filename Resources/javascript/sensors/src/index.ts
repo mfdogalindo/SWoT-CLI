@@ -5,87 +5,40 @@ import { ActuatorSimulator } from './simulators/actuator.simulator';
 import { SensorType, ActuatorType, ZoneType } from './types';
 import { ActuatorController } from './controllers/actuator.controller';
 import { logger } from './utils/logger.service';
+import { ScheduleService } from './services/schedule.service';
+import { BehaviorSimulator } from './services/behavior.simulator';
 
-// Crear sensores y actuadores para cada zona
-const sensors: SensorSimulator[] = [];
-const actuators: ActuatorSimulator[] = [];
+class SimulationRunner {
+  private behaviorSimulator: BehaviorSimulator;
+  private scheduleService: ScheduleService;
+  private simulationStartTime: number;
 
-// Crear sensores de ubicación y movimiento para residentes
-const residents = [
-  'resident1',
-  'resident2',
-  'resident3',
-  'resident4',
-  'resident5',
-];
-residents.forEach(residentId => {
-  // Sensor de ubicación
-  sensors.push(
-    new SensorSimulator(
-      `location_${residentId}`,
-      SensorType.LOCATION,
-      { zoneId: 'room1', zoneType: ZoneType.ROOM }, // ubicación inicial
-    ),
-  );
+  private actuators: ActuatorSimulator[] = [];
 
-  // Sensor de movimiento
-  sensors.push(
-    new SensorSimulator(`movement_${residentId}`, SensorType.MOVEMENT, {
-      zoneId: 'room1',
-      zoneType: ZoneType.ROOM,
-    }),
-  );
-});
+  constructor() {
+    // Inicializar servicios core
+    this.scheduleService = ScheduleService.getInstance();
+    this.behaviorSimulator = new BehaviorSimulator();
+    this.simulationStartTime = Date.now();
+    new ActuatorController();
+  }
 
-// Crear sensores de ubicación para el personal
-const staff = ['nurse1', 'nurse2', 'staff1'];
-staff.forEach(staffId => {
-  sensors.push(
-    new SensorSimulator(
-      `location_${staffId}`,
-      SensorType.LOCATION,
-      { zoneId: 'living-room', zoneType: ZoneType.LIVING_ROOM }, // ubicación inicial
-    ),
-  );
-});
+}
 
-// Crear actuadores para cada zona
-config.zones.rooms.forEach(zone => {
-  // Actuador de temperatura para cada zona
-  actuators.push(
-    new ActuatorSimulator(`temp_${zone.id}`, ActuatorType.TEMPERATURE, {
-      zoneId: zone.id,
-      zoneType: zone.type,
-    }),
-  );
 
-  // Actuador de luz para cada zona
-  actuators.push(
-    new ActuatorSimulator(`light_${zone.id}`, ActuatorType.LIGHT, {
-      zoneId: zone.id,
-      zoneType: zone.type,
-    }),
-  );
-});
-
-// Crear actuador de alarma en el salón de estar
-actuators.push(
-  new ActuatorSimulator('alarm_living-room', ActuatorType.ALARM, {
-    zoneId: 'living-room',
-    zoneType: ZoneType.LIVING_ROOM,
-  }),
-);
-
-// Inicializar el controlador de actuadores
-new ActuatorController(actuators);
-
-// Iniciar simulación
-setInterval(() => {
-  sensors.forEach(sensor => sensor.simulate());
-}, config.simulation.updateInterval);
+// Iniciar la simulación
+if (require.main === module) {
+  try {
+    new SimulationRunner();
+    logger.info('Simulation runner initialized successfully');
+  } catch (error) {
+    logger.error('Error starting simulation:', error);
+    process.exit(1);
+  }
+}
 
 // Manejo de señales para una terminación limpia
 process.on('SIGINT', () => {
-  logger.info('Cerrando conexión MQTT...');
+  logger.info('Shutting down simulation...');
   process.exit(0);
 });
