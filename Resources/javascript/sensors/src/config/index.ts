@@ -23,6 +23,32 @@ export const config = {
   },
   simulation: {
     updateInterval: parseInt(process.env.UPDATE_INTERVAL || '5000'),
+    residents: {
+      defaultRooms: {
+        'resident1': 'room1',
+        'resident2': 'room2',
+        'resident3': 'room3',
+        'resident4': 'room4',
+        'resident5': 'room5'
+      },
+      mealTimes: {
+        breakfast: { start: 8, duration: 1 },
+        lunch: { start: 13, duration: 1 },
+        dinner: { start: 19, duration: 1 }
+      },
+      activities: {
+        morning: { start: 10, duration: 2, location: 'living-room' },
+        afternoon: { start: 15, duration: 2, location: 'yard' },
+        evening: { start: 17, duration: 2, location: 'living-room' }
+      }
+    },
+    staff: {
+      shiftChanges: {
+        morning: 7,
+        afternoon: 15,
+        night: 23
+      }
+    }
   },
   zones: {
     rooms: [
