@@ -1,0 +1,62 @@
+import { mqttService } from "./mqtt.service";
+import { config } from "../config";
+import { logger } from "../utils/logger.service";
+import { semanticMapper } from "../mappers/sematic.mapper";
+import { jenaService } from "./jena.service";
+
+export class EventManager {
+
+   initialize(): void {
+      // Subscribe to all topics
+      mqttService.subscribe(config.topics.semantic.sensors);
+      mqttService.subscribe(config.topics.semantic.actuators);
+
+      this.listen();
+      logger.info('Event manager initialized');
+   }
+
+   listen(): void {
+      mqttService.emitter.on('message', (topic, message) => {
+
+         switch (topic) {
+            case config.topics.semantic.sensors:
+               this.handleSensorMessage(message);
+               break;
+            case config.topics.semantic.actuators:
+               this.handleActuatorStateMessage(message);
+               break;
+            default:
+               logger.warn('Unknown topic: {}', topic);
+               break;
+         }
+
+      });
+   }
+
+   async handleSensorMessage(message: Buffer): Promise<void> {
+      const sensorData = await semanticMapper.toSensor(message);
+
+      if (!sensorData) {
+         logger.warn('Invalid sensor data: {}', message.toString());
+         return;
+      }
+
+      logger.info('Sensor data: {}', sensorData);
+   }
+
+   async handleActuatorStateMessage(message: Buffer): Promise<void> {
+      const actuatorData = await semanticMapper.toActuator(message);
+
+      if (!actuatorData) {
+         logger.warn('Invalid actuator data: {}', message.toString());
+         return;
+      }
+      
+      logger.info('Actuator data: {}', actuatorData);
+   }
+
+   
+}
+
+// Singleton instance of EventManager
+export const eventManager = new EventManager();
