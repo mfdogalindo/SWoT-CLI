@@ -84,10 +84,32 @@ services:
       - LOG_LEVEL=INFO
     depends_on:
       - jena
+      - mysql
+      - redis
+      - mosquitto
     networks:
       - jena-network
       - mysql-network
       - redis-network
+      - mosquitto-network
+
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - JENA_HOST=http://jena:3030
+      - JENA_DATASET=nursing_home
+      - JENA_USER=admin
+      - JENA_PASSWORD=Oe8AUz9xPHbdskvn
+      - SEMANTIC_SENSOR_TOPIC=nursing-home/semantic/sensors
+      - SEMANTIC_ACTUATOR_TOPIC=nursing-home/semantic/actuators
+    depends_on:
+      - mapper
+    networks:
+      - jena-network
       - mosquitto-network
 
 networks:

@@ -2,9 +2,11 @@ import { mqttService } from "./mqtt.service";
 import { config } from "../config";
 import { logger } from "../utils/logger.service";
 import { semanticMapper } from "../mappers/sematic.mapper";
-import { jenaService } from "./jena.service";
+import { getWebSocketService, WebSocketService } from "./websocket.service";
 
 export class EventManager {
+
+   private websocketService: WebSocketService | undefined;
 
    initialize(): void {
       // Subscribe to all topics
@@ -12,6 +14,7 @@ export class EventManager {
       mqttService.subscribe(config.topics.semantic.actuators);
 
       this.listen();
+      this.websocketService = getWebSocketService();
       logger.info('Event manager initialized');
    }
 
@@ -41,7 +44,7 @@ export class EventManager {
          return;
       }
 
-      logger.info('Sensor data: {}', sensorData);
+      this.websocketService?.broadcastSensorUpdate(sensorData);
    }
 
    async handleActuatorStateMessage(message: Buffer): Promise<void> {
@@ -52,7 +55,7 @@ export class EventManager {
          return;
       }
       
-      logger.info('Actuator data: {}', actuatorData);
+      this.websocketService?.broadcastActuatorUpdate(actuatorData);
    }
 
    
