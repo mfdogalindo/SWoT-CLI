@@ -90,8 +90,8 @@ INSERT INTO zones (id, name, type, description, default_temperature) VALUES
 ('bathroom3', 'Baño 3', 'BATHROOM', 'Baño de habitación 3', 23.0),
 ('bathroom4', 'Baño 4', 'BATHROOM', 'Baño de habitación 4', 23.0),
 ('bathroom5', 'Baño 5', 'BATHROOM', 'Baño de habitación 5', 23.0),
-('living-room', 'Sala de Estar', 'LIVING_ROOM', 'Sala común de estar', 22.0),
-('dining-room', 'Comedor', 'DINING_ROOM', 'Sala común de comidas', 22.0),
+('living_room', 'Sala de Estar', 'LIVING_ROOM', 'Sala común de estar', 22.0),
+('dining_room', 'Comedor', 'DINING_ROOM', 'Sala común de comidas', 22.0),
 ('yard', 'Patio', 'YARD', 'Área exterior', NULL);
 
 -- Insertar datos de ejemplo para personas
@@ -143,18 +143,18 @@ INSERT INTO actuators (id, type, zone_id, current_value, description) VALUES
 ('light_bathroom4', 'LIGHT', 'bathroom4', 'false', 'Control de luz baño 4'),
 ('temp_bathroom5', 'TEMPERATURE', 'bathroom5', '23.0', 'Control de temperatura baño 5'),
 ('light_bathroom5', 'LIGHT', 'bathroom5', 'false', 'Control de luz baño 5'),
-('temp_living-room', 'TEMPERATURE', 'living-room', '22.0', 'Control de temperatura sala de estar'),
-('light_living-room', 'LIGHT', 'living-room', 'false', 'Control de luz sala de estar'),
-('alarm_living-room', 'ALARM', 'living-room', 'false', 'Alarma sala de estar'),
-('temp_dining-room', 'TEMPERATURE', 'dining-room', '22.0', 'Control de temperatura comedor'),
-('light_dining-room', 'LIGHT', 'dining-room', 'false', 'Control de luz comedor'),
+('temp_living_room', 'TEMPERATURE', 'living_room', '22.0', 'Control de temperatura sala de estar'),
+('light_living_room', 'LIGHT', 'living_room', 'false', 'Control de luz sala de estar'),
+('alarm_living_room', 'ALARM', 'living_room', 'false', 'Alarma sala de estar'),
+('temp_dining_room', 'TEMPERATURE', 'dining_room', '22.0', 'Control de temperatura comedor'),
+('light_dining_room', 'LIGHT', 'dining_room', 'false', 'Control de luz comedor'),
 ('temp_yard', 'TEMPERATURE', 'yard', '22.0', 'Control de temperatura patio'),
 ('light_yard', 'LIGHT', 'yard', 'false', 'Control de luz patio');
 
 -- Insertar horarios de iluminación para zonas comunes
 INSERT INTO lighting_schedules (id, zone_id, start_time, end_time) VALUES
-(UUID(), 'living-room', '17:00:00', '07:00:00'),
-(UUID(), 'dining-room', '17:00:00', '07:00:00'),
+(UUID(), 'living_room', '17:00:00', '07:00:00'),
+(UUID(), 'dining_room', '17:00:00', '07:00:00'),
 (UUID(), 'yard', '17:00:00', '07:00:00');
 
 -- Crear un usuario para la aplicación

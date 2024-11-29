@@ -47,19 +47,19 @@ export class ScheduleService {
             hour: config.simulation.residents.mealTimes.breakfast.start,
             duration: config.simulation.residents.mealTimes.breakfast.duration,
             activity: Activity.BREAKFAST,
-            location: 'dining-room'
+            location: 'dining_room'
          },
          {
             hour: config.simulation.residents.mealTimes.lunch.start,
             duration: config.simulation.residents.mealTimes.lunch.duration,
             activity: Activity.LUNCH,
-            location: 'dining-room'
+            location: 'dining_room'
          },
          {
             hour: config.simulation.residents.mealTimes.dinner.start,
             duration: config.simulation.residents.mealTimes.dinner.duration,
             activity: Activity.DINNER,
-            location: 'dining-room'
+            location: 'dining_room'
          },
 
          // Actividades grupales
@@ -67,7 +67,7 @@ export class ScheduleService {
             hour: config.simulation.residents.activities.morning.start,
             duration: config.simulation.residents.activities.morning.duration,
             activity: Activity.GROUP_ACTIVITY,
-            location: 'living-room'
+            location: 'living_room'
          },
          {
             hour: config.simulation.residents.activities.afternoon.start,
@@ -79,7 +79,7 @@ export class ScheduleService {
             hour: config.simulation.residents.activities.evening.start,
             duration: config.simulation.residents.activities.evening.duration,
             activity: Activity.SOCIAL,
-            location: 'living-room'
+            location: 'living_room'
          }
 
       ];

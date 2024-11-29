@@ -49,7 +49,7 @@ export class StaffService {
 
     // Horarios de comida
     if (this.isMealTime(currentHour)) {
-      return 'dining-room';
+      return 'dining_room';
     }
 
     // Rondas nocturnas más frecuentes
@@ -64,20 +64,20 @@ export class StaffService {
   private getCleaningStaffLocation(currentHour: number): string {
     // Horarios específicos para limpieza
     if (currentHour >= 8 && currentHour < 10) {
-      return 'dining-room'; // Limpieza después del desayuno
+      return 'dining_room'; // Limpieza después del desayuno
     }
     if (currentHour >= 14 && currentHour < 15) {
-      return 'dining-room'; // Limpieza después del almuerzo
+      return 'dining_room'; // Limpieza después del almuerzo
     }
     if (currentHour >= 20 && currentHour < 21) {
-      return 'dining-room'; // Limpieza después de la cena
+      return 'dining_room'; // Limpieza después de la cena
     }
 
     // Rotación de limpieza por zonas
     const cleaningSchedule = [
       'room1', 'room2', 'room3', 'room4', 'room5',
       'bathroom1', 'bathroom2', 'bathroom3', 'bathroom4', 'bathroom5',
-      'living-room', 'yard'
+      'living_room', 'yard'
     ];
     return cleaningSchedule[currentHour % cleaningSchedule.length];
   }
@@ -96,12 +96,12 @@ export class StaffService {
       return `room${(currentHour % 5) + 1}`;
     }
 
-    return 'living-room'; // Punto de control nocturno
+    return 'living_room'; // Punto de control nocturno
   }
 
   private getPatrolLocation(nurseId: string, currentHour: number): string {
     // Rotación de ubicaciones para rondas regulares
-    const patrolZones = ['room1', 'room2', 'room3', 'room4', 'room5', 'living-room'];
+    const patrolZones = ['room1', 'room2', 'room3', 'room4', 'room5', 'living_room'];
     const offset = nurseId === 'nurse1' ? 0 : 3; // Las enfermeras empiezan en diferentes puntos
     return patrolZones[(currentHour + offset) % patrolZones.length];
   }

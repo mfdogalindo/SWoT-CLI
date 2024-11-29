@@ -48,7 +48,7 @@ export class BehaviorSimulator {
     ['nurse1', 'nurse2', 'staff1'].forEach(staffId => {
       this.sensors.set(`location_${staffId}`, {
         type: SensorType.LOCATION,
-        location: { zoneId: 'living-room', zoneType: ZoneType.LIVING_ROOM }
+        location: { zoneId: 'living_room', zoneType: ZoneType.LIVING_ROOM }
       });
     });
   }
@@ -176,7 +176,7 @@ export class BehaviorSimulator {
     const schedule = this.residentSchedules.get(residentId);
     if (!schedule) {
       logger.error(`No schedule found for resident ${residentId}`);
-      return 'living-room';
+      return 'living_room';
     }
     return this.scheduleService.getCurrentLocation(schedule);
   }
