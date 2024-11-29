@@ -37,9 +37,9 @@ export const config = {
         dinner: { start: 19, duration: 1 }
       },
       activities: {
-        morning: { start: 10, duration: 2, location: 'living-room' },
+        morning: { start: 10, duration: 2, location: 'living_room' },
         afternoon: { start: 15, duration: 2, location: 'yard' },
-        evening: { start: 17, duration: 2, location: 'living-room' }
+        evening: { start: 17, duration: 2, location: 'living_room' }
       }
     },
     staff: {
@@ -62,8 +62,8 @@ export const config = {
       { id: 'bathroom3', type: ZoneType.BATHROOM },
       { id: 'bathroom4', type: ZoneType.BATHROOM },
       { id: 'bathroom5', type: ZoneType.BATHROOM },
-      { id: 'living-room', type: ZoneType.LIVING_ROOM },
-      { id: 'dining-room', type: ZoneType.DINING_ROOM },
+      { id: 'living_room', type: ZoneType.LIVING_ROOM },
+      { id: 'dining_room', type: ZoneType.DINING_ROOM },
       { id: 'yard', type: ZoneType.YARD },
     ],
   },

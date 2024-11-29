@@ -32,8 +32,8 @@ export class ActuatorController {
 
     // Crear actuador de alarma en el salón de estar
     actuatorsList.push(
-      new ActuatorSimulator('alarm_living-room', ActuatorType.ALARM, {
-        zoneId: 'living-room',
+      new ActuatorSimulator('alarm_living_room', ActuatorType.ALARM, {
+        zoneId: 'living_room',
         zoneType: ZoneType.LIVING_ROOM,
       }),
     );

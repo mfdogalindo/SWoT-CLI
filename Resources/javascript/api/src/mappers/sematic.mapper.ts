@@ -183,8 +183,8 @@ export class SemanticMapper {
     const zoneTypes: {[key: string]: string} = {
       'room': 'ROOM',
       'bathroom': 'BATHROOM',
-      'living-room': 'LIVING_ROOM',
-      'dining-room': 'DINING_ROOM',
+      'living_room': 'LIVING_ROOM',
+      'dining_room': 'DINING_ROOM',
       'yard': 'YARD'
     };
 
